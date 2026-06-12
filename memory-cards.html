@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Card Game</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0c1a;
+    --text: #fff;
+    --text-muted: #888;
+    --topbar-bg: #1a1628;
+    --topbar-border: #2e2640;
+    --level-desc: #a78bfa;
+    --progress-bg: #2e2640;
+    --card-back-grad: linear-gradient(135deg, #2e1e5e, #1e1040);
+    --card-back-border: #4c3080;
+    --card-back-symbol: #4c3080;
+    --card-front-bg: #1e1040;
+    --card-front-border: #6d3afc;
+    --card-matched-bg: #0f2e1a;
+    --card-matched-border: #4ade80;
+    --card-matched-glow: #4ade8066;
+    --overlay-bg: #1a1628;
+    --btn-sec-bg: #2e2640;
+    --btn-sec-text: #c084fc;
+    --btn-sec-border: #4c3080;
+  }
+  body.light-mode {
+    --bg: #f0f2f8;
+    --text: #111;
+    --text-muted: #666;
+    --topbar-bg: #ffffff;
+    --topbar-border: #d0d5e0;
+    --level-desc: #7c3aed;
+    --progress-bg: #e4e7f0;
+    --card-back-grad: linear-gradient(135deg, #e4e0f8, #c7beee);
+    --card-back-border: #7c3aed;
+    --card-back-symbol: #7c3aed;
+    --card-front-bg: #ffffff;
+    --card-front-border: #7c3aed;
+    --card-matched-bg: #ecfdf5;
+    --card-matched-border: #10b981;
+    --card-matched-glow: rgba(16, 185, 129, 0.2);
+    --overlay-bg: #ffffff;
+    --btn-sec-bg: #f3f4f6;
+    --btn-sec-text: #7c3aed;
+    --btn-sec-border: #d0d5e0;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    width: 100%;
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--topbar-border);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    transition: all 0.3s;
+  }
+  .game-title { font-size: 20px; font-weight: 700; color: var(--btn-sec-text); letter-spacing: 1px; }
+  .stats { display: flex; gap: 20px; align-items: center; }
+  .stat { text-align: center; }
+  .stat-val { font-size: 20px; font-weight: 700; }
+  .stat-lbl { font-size: 10px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+  .level-badge {
+    background: linear-gradient(135deg, #7c3aed, #c084fc);
+    padding: 6px 16px; border-radius: 20px;
+    font-weight: 700; font-size: 14px;
+    color: #fff;
+  }
+  #timer-val { color: #f87171; }
+  #moves-val { color: #60a5fa; }
+  #score-val { color: #4ade80; }
+
+  /* ── LEVEL INFO BAR ── */
+  .info-bar {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .level-desc { font-size: 13px; color: var(--level-desc); }
+  .pairs-left { font-size: 13px; color: var(--text-muted); }
+  .progress-bar { flex: 1; min-width: 120px; height: 6px; background: var(--progress-bg); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #c084fc); border-radius: 3px; transition: width 0.4s; }
+
+  /* ── GRID ── */
+  #grid-wrap {
+    width: 100%;
+    max-width: 900px;
+    padding: 0.5rem 1rem 2rem;
+    display: flex;
+    justify-content: center;
+  }
+  #grid {
+    display: grid;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  /* ── CARD ── */
+  .card {
+    width: var(--cw, 80px);
+    height: var(--ch, 80px);
+    perspective: 600px;
+    cursor: pointer;
+  }
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+    border-radius: 10px;
+  }
+  .card.flipped .card-inner,
+  .card.matched .card-inner { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute; inset: 0;
+    border-radius: 10px;
+    backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-back {
+    background: var(--card-back-grad);
+    border: 1.5px solid var(--card-back-border);
+    font-size: calc(var(--cw, 80px) * 0.38);
+    transition: all 0.3s;
+  }
+  .card-back::after {
+    content: "✦";
+    color: var(--card-back-symbol);
+    font-size: calc(var(--cw, 80px) * 0.45);
+    transition: all 0.3s;
+  }
+  .card-front {
+    background: var(--card-front-bg);
+    border: 1.5px solid var(--card-front-border);
+    transform: rotateY(180deg);
+    font-size: calc(var(--cw, 80px) * 0.48);
+    flex-direction: column;
+    gap: 2px;
+    transition: all 0.3s;
+  }
+  .card-label {
+    font-size: calc(var(--cw, 80px) * 0.13);
+    color: var(--text-muted);
+    line-height: 1;
+    display: none;
+  }
+  .card.matched .card-front {
+    background: var(--card-matched-bg);
+    border-color: var(--card-matched-border);
+    box-shadow: 0 0 16px var(--card-matched-glow);
+    animation: matchPop 0.4s ease;
+  }
+  @keyframes matchPop { 0%{transform:rotateY(180deg) scale(1)} 50%{transform:rotateY(180deg) scale(1.12)} 100%{transform:rotateY(180deg) scale(1)} }
+  .card.wrong .card-inner { animation: shake 0.4s ease; }
+  @keyframes shake { 0%,100%{transform:rotateY(180deg) translateX(0)} 25%{transform:rotateY(180deg) translateX(-6px)} 75%{transform:rotateY(180deg) translateX(6px)} }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: #000b;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .over-box {
+    background: var(--overlay-bg);
+    border: 1px solid var(--topbar-border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    transition: all 0.3s;
+  }
+  .over-icon { font-size: 56px; margin-bottom: 0.5rem; }
+  .over-box h2 { font-size: 26px; font-weight: 700; margin-bottom: 0.4rem; }
+  .over-box p { color: var(--level-desc); font-size: 15px; margin-bottom: 1.5rem; line-height: 1.6; }
+  .stats-row { display: flex; justify-content: center; gap: 24px; margin-bottom: 1.5rem; }
+  .over-stat .v { font-size: 22px; font-weight: 700; color: var(--btn-sec-text); }
+  .over-stat .l { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .btn { padding: 12px 28px; font-size: 14px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px; }
+  .btn-primary { background: linear-gradient(135deg, #7c3aed, #c084fc); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary { background: var(--btn-sec-bg); color: var(--btn-sec-text); border: 1px solid var(--btn-sec-border); margin-left: 10px; transition: all 0.3s; }
+  .btn-secondary:hover { background: var(--topbar-border); }
+
+  /* ── LEVEL TRANSITION ── */
+  .level-banner {
+    display: none;
+    position: fixed; inset: 0;
+    background: #000c;
+    z-index: 60;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .level-banner.show { display: flex; }
+  .banner-level { font-size: 18px; color: #a78bfa; letter-spacing: 3px; text-transform: uppercase; }
+  .banner-num { font-size: 80px; font-weight: 900; color: #c084fc; line-height: 1; text-shadow: 0 0 40px #c084fc88; animation: zoomIn 0.5s ease; }
+  .banner-desc { font-size: 16px; color: #888; }
+  @keyframes zoomIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  .back-home { position: fixed; top: 16px; left: 16px; z-index: 999; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--topbar-bg); border: 1px solid var(--topbar-border); border-radius: 10px; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-muted); text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.2s; }
+  .back-home:hover { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-border); transform: translateX(-2px); }
+  .back-home .back-icon { font-size: 16px; }
+
+  /* ── THEME TOGGLE ── */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 999;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid #2a2a5a;
+    background: rgba(14, 14, 40, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fbbf24;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.35s ease;
+    outline: none;
+  }
+  .theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+    border-color: #fbbf24;
+    box-shadow: 0 4px 24px rgba(251, 191, 36, 0.2);
+  }
+  body.light-mode .theme-toggle {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #d0d5e0;
+    color: #7c3aed;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+  body.light-mode .theme-toggle:hover {
+    border-color: #7c3aed;
+    box-shadow: 0 4px 24px rgba(124, 58, 237, 0.15);
+  }
+  .theme-toggle .icon { transition: transform 0.35s ease; display: inline-block; }
+  .theme-toggle:hover .icon { transform: rotate(20deg); }x); }
+  .back-home .back-icon { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-home"><span class="back-icon">←</span> Home</a>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="game-title">🃏 Memory</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="timer-val">0:00</div><div class="stat-lbl">Time</div></div>
+    <div class="stat"><div class="stat-val" id="moves-val">0</div><div class="stat-lbl">Moves</div></div>
+    <div class="stat"><div class="stat-val" id="score-val">0</div><div class="stat-lbl">Score</div></div>
+    <div class="level-badge" id="level-badge">Level 1</div>
+  </div>
+  <button class="btn btn-secondary" onclick="restartLevel()">↺ Restart</button>
+</div>
+
+<!-- INFO BAR -->
+<div class="info-bar">
+  <div class="level-desc" id="level-desc"></div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="pairs-left" id="pairs-left"></div>
+</div>
+
+<!-- GRID -->
+<div id="grid-wrap"><div id="grid"></div></div>
+
+<!-- START OVERLAY -->
+<div class="overlay show" id="start-overlay">
+  <div class="over-box">
+    <div class="over-icon">🃏</div>
+    <h2>Memory Cards</h2>
+    <p>Match all pairs to complete each level. The game gets harder as you go — more cards, less time, and shorter peek windows!</p>
+    <div style="margin-bottom:1rem;font-size:13px;color:#666;">
+      Level 1 → 6 pairs &nbsp;|&nbsp; Level 10 → 20 pairs<br>
+      Cards flip back faster each level
+    </div>
+    <button class="btn btn-primary" onclick="initLevel(1); document.getElementById('start-overlay').classList.remove('show')">Start Game</button>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="overlay" id="win-overlay">
+  <div class="over-box">
+    <div class="over-icon" id="win-icon">🎉</div>
+    <h2 id="win-title">Level Complete!</h2>
+    <p id="win-msg"></p>
+    <div class="stats-row">
+      <div class="over-stat"><div class="v" id="win-time">0:00</div><div class="l">Time</div></div>
+      <div class="over-stat"><div class="v" id="win-moves">0</div><div class="l">Moves</div></div>
+      <div class="over-stat"><div class="v" id="win-bonus">+0</div><div class="l">Bonus</div></div>
+    </div>
+    <button class="btn btn-primary" id="win-btn" onclick="nextLevel()">Next Level →</button>
+    <button class="btn btn-secondary" onclick="restartLevel()">Replay</button>
+  </div>
+</div>
+
+<!-- FAIL OVERLAY -->
+<div class="overlay" id="fail-overlay">
+  <div class="over-box">
+    <div class="over-icon">⏰</div>
+    <h2>Time's Up!</h2>
+    <p id="fail-msg">You ran out of time. Try again!</p>
+    <div class="stats-row">
+      <div class="over-stat"><div class="v" id="fail-matched">0</div><div class="l">Matched</div></div>
+      <div class="over-stat"><div class="v" id="fail-moves">0</div><div class="l">Moves</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="restartLevel()">Try Again</button>
+    <button class="btn btn-secondary" onclick="initLevel(1); document.getElementById('fail-overlay').classList.remove('show')">Level 1</button>
+  </div>
+</div>
+
+<!-- LEVEL BANNER -->
+<div class="level-banner" id="level-banner">
+  <div class="banner-level">Level</div>
+  <div class="banner-num" id="banner-num">1</div>
+  <div class="banner-desc" id="banner-desc"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  LEVEL CONFIG
+// ══════════════════════════════════════
+const LEVELS = [
+  // lv, pairs, cols, timeLimit(s), peekMs, label
+  { lv:1,  pairs:6,  cols:4, time:0,   peek:1200, label:"Warm Up — no time limit" },
+  { lv:2,  pairs:8,  cols:4, time:0,   peek:1000, label:"Getting started — no time limit" },
+  { lv:3,  pairs:10, cols:5, time:120, peek:900,  label:"Easy — 2 minutes" },
+  { lv:4,  pairs:12, cols:6, time:110, peek:800,  label:"Steady — cards flip quicker" },
+  { lv:5,  pairs:14, cols:7, time:100, peek:700,  label:"Medium — more pairs" },
+  { lv:6,  pairs:15, cols:6, time:90,  peek:600,  label:"Tricky — less time" },
+  { lv:7,  pairs:16, cols:8, time:85,  peek:550,  label:"Hard — 8 columns" },
+  { lv:8,  pairs:18, cols:6, time:80,  peek:500,  label:"Harder — 18 pairs!" },
+  { lv:9,  pairs:20, cols:8, time:75,  peek:450,  label:"Expert — 20 pairs, fast flip" },
+  { lv:10, pairs:20, cols:10,time:70,  peek:400,  label:"Master — 10 columns, 70 seconds!" },
+];
+
+// ══════════════════════════════════════
+//  EMOJI POOLS (80 unique emojis)
+// ══════════════════════════════════════
+const EMOJI_POOL = [
+  // animals
+  "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐸","🐙","🦋","🦄",
+  // food
+  "🍎","🍊","🍋","🍇","🍓","🍑","🥝","🌽","🍕","🍔","🍣","🧁","🍩","🍦","🥐","🌮",
+  // nature
+  "🌸","🌺","🌻","🍄","🌈","⭐","🌙","☀️","❄️","🔥","💧","🌊","🍀","🌴","🦀","🐠",
+  // objects
+  "🎸","🎺","🎻","🥁","🎮","🕹️","🎯","🎱","🏆","🎨","🎭","🎪","🔮","💎","🗝️","⚗️",
+  // faces & symbols
+  "😺","👾","🤖","👻","🎃","🦸","🧙","🧜","🧚","🧞","🦝","🦩","🦚","🦜","🦢","🐲",
+];
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let currentLevel = 1;
+let cards = [];
+let flipped = [];
+let matched = 0;
+let moves = 0;
+let score = 0;
+let locked = false;
+let timerEl, timerSecs, timerInterval;
+let startTime;
+let levelCfg;
+
+// Card colour themes per level
+const THEMES = [
+  { bg:"#1e1040", border:"#6d3afc", glow:"#7c3aed66", mbg:"#0f2e1a", mborder:"#4ade80", mglow:"#4ade8066" },
+  { bg:"#1a1f3a", border:"#3b82f6", glow:"#3b82f666", mbg:"#0f2530", mborder:"#22d3ee", mglow:"#22d3ee66" },
+  { bg:"#2a1228", border:"#ec4899", glow:"#ec489966", mbg:"#2a1015", mborder:"#f87171", mglow:"#f8717166" },
+  { bg:"#1a2a10", border:"#84cc16", glow:"#84cc1666", mbg:"#0f2520", mborder:"#34d399", mglow:"#34d39966" },
+  { bg:"#2a1a08", border:"#f97316", glow:"#f9731666", mbg:"#2a1508", mborder:"#fbbf24", mglow:"#fbbf2466" },
+  { bg:"#101a2a", border:"#06b6d4", glow:"#06b6d466", mbg:"#0f1f30", mborder:"#60a5fa", mglow:"#60a5fa66" },
+  { bg:"#201010", border:"#ef4444", glow:"#ef444466", mbg:"#2a0808", mborder:"#fb923c", mglow:"#fb923c66" },
+  { bg:"#1a1020", border:"#a855f7", glow:"#a855f766", mbg:"#1a0a2a", mborder:"#e879f9", mglow:"#e879f966" },
+  { bg:"#0a1a1a", border:"#14b8a6", glow:"#14b8a666", mbg:"#0a2020", mborder:"#86efac", mglow:"#86efac66" },
+  { bg:"#1a1508", border:"#eab308", glow:"#eab30866", mbg:"#201800", mborder:"#fde68a", mglow:"#fde68a66" },
+];
+
+// ══════════════════════════════════════
+//  INIT LEVEL
+// ══════════════════════════════════════
+function initLevel(lv) {
+  currentLevel = lv;
+  levelCfg = LEVELS[Math.min(lv-1, LEVELS.length-1)];
+  // override pairs/cols for levels beyond 10
+  if(lv > 10) {
+    levelCfg = { lv, pairs: 20, cols: 10, time: Math.max(40, 70-(lv-10)*3), peek: Math.max(200, 400-(lv-10)*20), label: `Insane Level ${lv}!` };
+  }
+
+  const theme = THEMES[(lv-1) % THEMES.length];
+  moves = 0; matched = 0; flipped = []; locked = false;
+
+  // timer
+  clearInterval(timerInterval); timerSecs = 0;
+  document.getElementById("timer-val").style.color = "#f87171";
+
+  // ui
+  document.getElementById("level-badge").textContent = `Level ${lv}`;
+  document.getElementById("level-desc").textContent = levelCfg.label;
+  document.getElementById("moves-val").textContent = "0";
+  updatePairsLeft();
+
+  // pick emojis
+  const pool = shuffle([...EMOJI_POOL]).slice(0, levelCfg.pairs);
+  const cardData = shuffle([...pool, ...pool]);
+
+  // grid sizing
+  const cols = levelCfg.cols;
+  const rows = Math.ceil(cardData.length / cols);
+  const maxW = Math.min(860, window.innerWidth - 40);
+  const cw = Math.max(52, Math.min(88, Math.floor((maxW - (cols-1)*10) / cols)));
+  const ch = cw;
+
+  const grid = document.getElementById("grid");
+  grid.style.gridTemplateColumns = `repeat(${cols}, ${cw}px)`;
+  grid.innerHTML = "";
+  document.documentElement.style.setProperty("--cw", cw+"px");
+  document.documentElement.style.setProperty("--ch", ch+"px");
+
+  cards = cardData.map((emoji, i) => {
+    const el = document.createElement("div");
+    el.className = "card";
+    el.dataset.index = i;
+    el.dataset.emoji = emoji;
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front" style="--card-bg:${theme.bg};--card-border:${theme.border};--card-bg-matched:${theme.mbg};--card-border-matched:${theme.mborder};--card-glow:${theme.mglow}">
+          <span>${emoji}</span>
+        </div>
+      </div>`;
+    el.style.setProperty("--card-bg", theme.bg);
+    el.style.setProperty("--card-border", theme.border);
+    el.addEventListener("click", ()=>flipCard(i));
+    grid.appendChild(el);
+    return el;
+  });
+
+  // peek all cards briefly
+  peekAll(levelCfg.peek);
+
+  // start timer after peek
+  startTime = null;
+  setTimeout(()=>{
+    startTime = Date.now();
+    if(levelCfg.time > 0) {
+      timerSecs = levelCfg.time;
+      updateTimerDisplay();
+      timerInterval = setInterval(()=>{
+        timerSecs--;
+        updateTimerDisplay();
+        if(timerSecs <= 10) document.getElementById("timer-val").style.color="#ff4444";
+        if(timerSecs <= 0) { clearInterval(timerInterval); timeUp(); }
+      }, 1000);
+    } else {
+      timerSecs = 0;
+      timerInterval = setInterval(()=>{ timerSecs++; updateTimerDisplay(); }, 1000);
+    }
+  }, levelCfg.peek + 200);
+}
+
+function peekAll(ms) {
+  locked = true;
+  cards.forEach(c=>c.classList.add("flipped"));
+  setTimeout(()=>{ cards.forEach(c=>c.classList.remove("flipped")); locked=false; }, ms);
+}
+
+// ══════════════════════════════════════
+//  FLIP LOGIC
+// ══════════════════════════════════════
+function flipCard(i) {
+  if(locked) return;
+  const card = cards[i];
+  if(card.classList.contains("flipped")||card.classList.contains("matched")) return;
+  card.classList.add("flipped");
+  flipped.push(i);
+  if(flipped.length === 2) {
+    locked = true;
+    moves++;
+    document.getElementById("moves-val").textContent = moves;
+    const [a,b] = flipped;
+    if(cards[a].dataset.emoji === cards[b].dataset.emoji) {
+      // match!
+      setTimeout(()=>{
+        cards[a].classList.add("matched");
+        cards[b].classList.add("matched");
+        cards[a].classList.remove("flipped");
+        cards[b].classList.remove("flipped");
+        flipped = []; matched++; locked = false;
+        updatePairsLeft();
+        addScore(50);
+        if(matched === levelCfg.pairs) levelComplete();
+      }, 300);
+    } else {
+      // no match
+      cards[a].classList.add("wrong");
+      cards[b].classList.add("wrong");
+      setTimeout(()=>{
+        cards[a].classList.remove("flipped","wrong");
+        cards[b].classList.remove("flipped","wrong");
+        flipped = []; locked = false;
+      }, 900);
+    }
+  }
+}
+
+// ══════════════════════════════════════
+//  SCORING
+// ══════════════════════════════════════
+function addScore(base) {
+  const bonus = levelCfg.lv * 10;
+  score += base + bonus;
+  document.getElementById("score-val").textContent = score;
+}
+
+function updatePairsLeft() {
+  const rem = levelCfg.pairs - matched;
+  document.getElementById("pairs-left").textContent = `${rem} pairs left`;
+  const pct = (matched / levelCfg.pairs * 100).toFixed(0);
+  document.getElementById("progress-fill").style.width = pct+"%";
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById("timer-val");
+  if(levelCfg.time > 0) {
+    el.textContent = fmt(timerSecs);
+  } else {
+    el.textContent = fmt(timerSecs);
+    el.style.color = "#60a5fa";
+  }
+}
+
+function fmt(s) {
+  const m=Math.floor(Math.abs(s)/60), sec=Math.abs(s)%60;
+  return `${m}:${sec.toString().padStart(2,"0")}`;
+}
+
+// ══════════════════════════════════════
+//  LEVEL COMPLETE
+// ══════════════════════════════════════
+function levelComplete() {
+  clearInterval(timerInterval);
+  const elapsed = Math.floor((Date.now()-startTime)/1000);
+  let timeBonus = 0;
+  if(levelCfg.time > 0) timeBonus = timerSecs * 5;
+  else timeBonus = Math.max(0, 200 - elapsed*2);
+  const moveBonus = Math.max(0, 300 - moves*5);
+  const totalBonus = timeBonus + moveBonus;
+  score += totalBonus;
+  document.getElementById("score-val").textContent = score;
+
+  const isLast = currentLevel >= 10;
+  document.getElementById("win-icon").textContent = isLast ? "🏆" : "🎉";
+  document.getElementById("win-title").textContent = isLast ? "You Beat The Game!" : `Level ${currentLevel} Complete!`;
+  document.getElementById("win-msg").textContent = isLast
+    ? `Incredible! You conquered all 10 levels with a score of ${score}!`
+    : `Great job! Get ready for Level ${currentLevel+1} — ${LEVELS[currentLevel]?.label||"more cards!"}`;
+  document.getElementById("win-time").textContent = fmt(elapsed);
+  document.getElementById("win-moves").textContent = moves;
+  document.getElementById("win-bonus").textContent = "+" + totalBonus;
+  document.getElementById("win-btn").textContent = isLast ? "Play Again" : `Level ${currentLevel+1} →`;
+  document.getElementById("win-overlay").classList.add("show");
+}
+
+function nextLevel() {
+  document.getElementById("win-overlay").classList.remove("show");
+  const next = currentLevel >= 10 ? 1 : currentLevel + 1;
+  showLevelBanner(next);
+}
+
+function showLevelBanner(lv) {
+  const banner = document.getElementById("level-banner");
+  const cfg = LEVELS[Math.min(lv-1, LEVELS.length-1)];
+  document.getElementById("banner-num").textContent = lv;
+  document.getElementById("banner-desc").textContent = cfg?.label||"";
+  banner.classList.add("show");
+  setTimeout(()=>{ banner.classList.remove("show"); initLevel(lv); }, 1800);
+}
+
+function timeUp() {
+  locked = true;
+  document.getElementById("fail-matched").textContent = matched;
+  document.getElementById("fail-moves").textContent = moves;
+  document.getElementById("fail-msg").textContent = `You matched ${matched} of ${levelCfg.pairs} pairs. So close!`;
+  document.getElementById("fail-overlay").classList.add("show");
+}
+
+function restartLevel() {
+  document.getElementById("win-overlay").classList.remove("show");
+  document.getElementById("fail-overlay").classList.remove("show");
+  clearInterval(timerInterval);
+  score = Math.max(0, score - 50);
+  initLevel(currentLevel);
+}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+function shuffle(arr) {
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
+</script>
+
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+  <span class="icon" id="theme-icon">☀️</span>
+</button>
+<script>
+(function() {
+  const toggle = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  
+  function updateTheme(isLight) {
+    if (isLight) {
+      document.body.classList.add('light-mode');
+      icon.textContent = '🌙';
+    } else {
+      document.body.classList.remove('light-mode');
+      icon.textContent = '☀️';
+    }
+  }
+
+  // Load initial theme
+  const saved = localStorage.getItem('levelup-theme');
+  updateTheme(saved === 'light');
+
+  toggle.addEventListener('click', () => {
+    const isLight = !document.body.classList.contains('light-mode');
+    updateTheme(isLight);
+    localStorage.setItem('levelup-theme', isLight ? 'light' : 'dark');
+  });
+})();
+</script>
+</body>
+</html>

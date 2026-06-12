@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LevelUp Studio — School Expo 2026</title>
+<meta name="description" content="LevelUp Studio — A collection of browser-based games built for the School Expo 2026. Play Tetris, Hangman, Snake, Memory Cards, and Realm of Embers!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-deep: #050510;
+  --bg-dark: #0a0a1e;
+  --bg-card: #0e0e28;
+  --border: #1a1a4080;
+  --glow-cyan: #22d3ee;
+  --glow-blue: #3b82f6;
+  --glow-purple: #a855f7;
+  --glow-amber: #f59e0b;
+  --glow-red: #ef4444;
+  --glow-green: #4ade80;
+  --glow-pink: #ec4899;
+  --text-primary: #e8eaf0;
+  --text-secondary: #8890a4;
+  --text-muted: #555d74;
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+/* ── LIGHT MODE OVERRIDES ── */
+body.light-mode {
+  --bg-deep: #f0f2f8;
+  --bg-dark: #e4e7f0;
+  --bg-card: #ffffff;
+  --border: #d0d5e0;
+  --glow-cyan: #0891b2;
+  --glow-blue: #2563eb;
+  --glow-purple: #7c3aed;
+  --glow-amber: #d97706;
+  --glow-red: #dc2626;
+  --glow-green: #16a34a;
+  --glow-pink: #db2777;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5068;
+  --text-muted: #787e94;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Hide stars in light mode */
+body.light-mode .bg-stars,
+body.light-mode .bg-nebula { opacity: 0; transition: opacity 0.4s ease; }
+
+body.light-mode .banner-wrapper {
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0,0,0,0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .banner-wrapper::before { opacity: 0.15; }
+
+body.light-mode .banner-overlay {
+  background: linear-gradient(to bottom, transparent 50%, rgba(240, 242, 248, 0.6) 100%);
+}
+
+body.light-mode .hero-title {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 30%, #1a1a2e 50%, #2563eb 70%, #7c3aed 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body.light-mode .game-card {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border-color: #dde0ea;
+}
+
+body.light-mode .game-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 30px var(--card-glow-alpha, rgba(59, 130, 246, 0.08));
+}
+
+body.light-mode .card-visual {
+  background: var(--card-bg-gradient);
+}
+body.light-mode .game-card[data-game="tetris"] { --card-bg-gradient: linear-gradient(135deg, #e0f7fa, #e6f0ff); --card-glow-alpha: rgba(8, 145, 178, 0.1); }
+body.light-mode .game-card[data-game="hangman"] { --card-bg-gradient: linear-gradient(135deg, #fff8e1, #fff3e0); --card-glow-alpha: rgba(217, 119, 6, 0.1); }
+body.light-mode .game-card[data-game="snake"] { --card-bg-gradient: linear-gradient(135deg, #e8f5e9, #f1f8e9); --card-glow-alpha: rgba(22, 163, 106, 0.1); }
+body.light-mode .game-card[data-game="memory"] { --card-bg-gradient: linear-gradient(135deg, #f3e8ff, #ede9fe); --card-glow-alpha: rgba(124, 58, 237, 0.1); }
+body.light-mode .game-card[data-game="fantasy"] { --card-bg-gradient: linear-gradient(135deg, #fef2f2, #fff7ed); --card-glow-alpha: rgba(220, 38, 38, 0.1); }
+
+body.light-mode .tag {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .footer { border-top-color: rgba(0, 0, 0, 0.06); }
+
+body.light-mode .scroll-hint span { color: var(--text-muted); }
+body.light-mode .scroll-hint .chevron { color: var(--glow-blue); }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 999;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #2a2a5a;
+  background: rgba(14, 14, 40, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fbbf24;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.35s ease;
+  outline: none;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1) rotate(15deg);
+  border-color: #fbbf24;
+  box-shadow: 0 4px 24px rgba(251, 191, 36, 0.2);
+}
+
+body.light-mode .theme-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #d0d5e0;
+  color: #7c3aed;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .theme-toggle:hover {
+  border-color: #7c3aed;
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.15);
+}
+
+.theme-toggle .icon { transition: transform 0.35s ease; display: inline-block; }
+.theme-toggle:hover .icon { transform: rotate(20deg); }
+
+/* ═══════════════════════════════════════
+   ANIMATED BACKGROUND
+   ═══════════════════════════════════════ */
+.bg-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-stars .star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite alternate;
+  opacity: 0;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: var(--max-o, 0.8); transform: scale(1); }
+}
+
+.bg-nebula {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(ellipse 800px 400px at 20% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 600px at 80% 30%, rgba(168, 85, 247, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 60% 80%, rgba(34, 211, 238, 0.04) 0%, transparent 70%);
+}
+
+/* ═══════════════════════════════════════
+   BANNER / HERO
+   ═══════════════════════════════════════ */
+.hero {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 1rem;
+}
+
+.banner-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  flex-shrink: 1;
+  min-height: 0;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 
+    0 0 60px rgba(168, 85, 247, 0.15),
+    0 0 120px rgba(59, 130, 246, 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, var(--glow-cyan), var(--glow-purple), var(--glow-blue), var(--glow-amber));
+  border-radius: 22px;
+  z-index: -1;
+  opacity: 0.4;
+  animation: borderGlow 6s ease-in-out infinite alternate;
+}
+
+@keyframes borderGlow {
+  0% { opacity: 0.25; }
+  100% { opacity: 0.55; }
+}
+
+.banner-img {
+  width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(5, 5, 16, 0.7) 100%);
+  pointer-events: none;
+}
+
+/* Scroll indicator */
+.scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+  margin-top: auto;
+  padding-bottom: 1rem;
+  animation: bounceDown 2s ease-in-out infinite;
+}
+
+.scroll-hint span {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+}
+
+.scroll-hint .chevron {
+  font-size: 20px;
+  color: var(--glow-cyan);
+  opacity: 0.7;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ═══════════════════════════════════════
+   HERO TEXT
+   ═══════════════════════════════════════ */
+.hero-text {
+  text-align: center;
+  padding: 0.75rem 1rem 0;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 3.5vw, 34px);
+  font-weight: 900;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 30%, #ffffff 50%, #22d3ee 70%, #a855f7 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerText 4s linear infinite;
+  margin-bottom: 0.25rem;
+}
+
+@keyframes shimmerText {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.hero-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(11px, 1.5vw, 14px);
+  font-weight: 300;
+  color: var(--text-secondary);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.hero-divider {
+  width: 80px;
+  height: 2px;
+  margin: 0.75rem auto;
+  background: linear-gradient(90deg, transparent, var(--glow-purple), var(--glow-cyan), transparent);
+  border-radius: 2px;
+}
+
+.hero-tagline {
+  font-size: clamp(12px, 1.5vw, 14px);
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════
+   SECTION HEADING
+   ═══════════════════════════════════════ */
+.section-heading {
+  text-align: center;
+  margin: 3rem 0 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.section-heading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(16px, 3vw, 24px);
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.section-heading h2 span {
+  color: var(--glow-cyan);
+}
+
+/* ═══════════════════════════════════════
+   GAME CARDS GRID
+   ═══════════════════════════════════════ */
+.games-grid {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 12px 1.5rem 4rem;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 20px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding: 0 1.5rem;
+  /* Hide scrollbar by default for a clean touch experience */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.games-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══════════════════════════════════════
+   GAME CARD
+   ═══════════════════════════════════════ */
+.game-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(.2, .8, .2, 1), box-shadow 0.35s ease;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
+
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--card-glow, var(--glow-blue)), transparent 60%);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.game-card:hover::before { opacity: 1; }
+
+.game-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 40px var(--card-glow-alpha, rgba(59, 130, 246, 0.12));
+}
+
+/* Card Header / Illustration */
+.card-visual {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--card-bg-gradient, linear-gradient(135deg, #0e1530, #0a0a20));
+}
+
+.card-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 80%, var(--card-glow-alpha, rgba(59, 130, 246, 0.1)), transparent 60%);
+}
+
+.card-icon {
+  font-size: 72px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 20px var(--card-glow-alpha, rgba(59, 130, 246, 0.3)));
+  animation: cardFloat 4s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Card Body */
+.card-body {
+  padding: 1.25rem 1.5rem 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.card-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  flex: 1;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 1rem;
+}
+
+.tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--tag-border, #2a2a5a);
+  color: var(--tag-color, var(--text-secondary));
+  background: var(--tag-bg, rgba(42, 42, 90, 0.3));
+}
+
+/* Card Play Button */
+.card-play {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--card-accent, var(--glow-cyan));
+  transition: gap 0.3s ease;
+}
+
+.game-card:hover .card-play { gap: 14px; }
+
+.card-play .arrow {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--card-accent, var(--glow-cyan));
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.game-card:hover .card-play .arrow {
+  background: var(--card-accent, var(--glow-cyan));
+  color: var(--bg-deep);
+}
+
+/* ═══════════════════════════════════════
+   INDIVIDUAL CARD THEMES
+   ═══════════════════════════════════════ */
+
+/* Tetris — Cyan */
+.game-card[data-game="tetris"] {
+  --card-glow: var(--glow-cyan);
+  --card-glow-alpha: rgba(34, 211, 238, 0.15);
+  --card-bg-gradient: linear-gradient(135deg, #081820, #0a1a2a);
+  --card-accent: var(--glow-cyan);
+  --float-delay: 0s;
+}
+
+/* Hangman — Amber */
+.game-card[data-game="hangman"] {
+  --card-glow: var(--glow-amber);
+  --card-glow-alpha: rgba(245, 158, 11, 0.15);
+  --card-bg-gradient: linear-gradient(135deg, #1a1408, #201a0a);
+  --card-accent: var(--glow-amber);
+  --float-delay: 0.5s;
+}
+
+/* Snake — Green */
+.game-card[data-game="snake"] {
+  --card-glow: var(--glow-green);
+  --card-glow-alpha: rgba(74, 222, 128, 0.15);
+  --card-bg-gradient: linear-gradient(135deg, #081a0e, #0a200a);
+  --card-accent: var(--glow-green);
+  --float-delay: 1s;
+}
+
+/* Memory — Purple */
+.game-card[data-game="memory"] {
+  --card-glow: var(--glow-purple);
+  --card-glow-alpha: rgba(168, 85, 247, 0.15);
+  --card-bg-gradient: linear-gradient(135deg, #150a28, #1a0e30);
+  --card-accent: var(--glow-purple);
+  --float-delay: 1.5s;
+}
+
+/* Realm of Embers — Red / Fire */
+.game-card[data-game="fantasy"] {
+  --card-glow: var(--glow-red);
+  --card-glow-alpha: rgba(239, 68, 68, 0.15);
+  --card-bg-gradient: linear-gradient(135deg, #1a0808, #200a05);
+  --card-accent: #f97316;
+  --float-delay: 2s;
+}
+
+/* ═══════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════ */
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.footer-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.footer-text .highlight {
+  color: var(--glow-amber);
+  font-weight: 600;
+}
+
+.footer-brand {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════
+   SCROLL REVEAL ANIMATIONS
+   ═══════════════════════════════════════ */
+.game-card {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.game-card:nth-child(1) { animation-delay: 0.1s; }
+.game-card:nth-child(2) { animation-delay: 0.2s; }
+.game-card:nth-child(3) { animation-delay: 0.3s; }
+.game-card:nth-child(4) { animation-delay: 0.4s; }
+.game-card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════ */
+@media (max-width: 640px) {
+  .games-grid {
+    gap: 16px;
+    padding: 12px 1rem 3rem;
+  }
+  .games-grid .game-card {
+    flex: 0 0 260px;
+  }
+
+  .hero { padding: 0.5rem 0.5rem 0; height: 100vh; }
+
+  .banner-wrapper { border-radius: 14px; }
+
+  .card-visual { height: 130px; }
+  .card-icon { font-size: 56px; }
+}
+
+@media (min-width: 960px) {
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    overflow-x: visible;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+    gap: 16px;
+    padding: 12px 1.5rem 4rem;
+  }
+  .games-grid::-webkit-scrollbar {
+    display: block;
+  }
+  .games-grid .game-card {
+    flex: initial;
+    width: auto;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+  <span class="icon" id="theme-icon">☀️</span>
+</button>
+
+<!-- Animated Star Background -->
+<div class="bg-stars" id="bg-stars"></div>
+<div class="bg-nebula"></div>
+
+<!-- ══════════ HERO / BANNER ══════════ -->
+<section class="hero">
+  <div class="banner-wrapper">
+    <img src="LevelUp Studio Banner.png" alt="LevelUp Studio — Game Collection Banner" class="banner-img">
+    <div class="banner-overlay"></div>
+  </div>
+
+  <div class="hero-text">
+    <h1 class="hero-title">LevelUp Studio</h1>
+    <p class="hero-subtitle">School Expo 2026 — Game Collection</p>
+    <div class="hero-divider"></div>
+    <p class="hero-tagline">
+      A collection of browser-based games built entirely with HTML, CSS &amp; JavaScript. 
+      Pick a game below and start playing — no installation needed!
+    </p>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll to play</span>
+    <div class="chevron">▼</div>
+  </div>
+</section>
+
+<!-- ══════════ SECTION HEADING ══════════ -->
+<div class="section-heading">
+  <h2>Choose <span>Your Game</span></h2>
+</div>
+
+<!-- ══════════ GAME CARDS ══════════ -->
+<div class="games-grid" id="games-grid">
+
+  <!-- 1. Tetris -->
+  <a href="tetris.html" class="game-card" data-game="tetris" id="card-tetris">
+    <div class="card-visual">
+      <div class="card-icon">🧱</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Tetris</div>
+      <p class="card-description">
+        The timeless block-stacking puzzle. Rotate and drop Tetriminos to clear lines and 
+        survive as the speed ramps up level after level.
+      </p>
+      <div class="card-tags">
+        <span class="tag" style="--tag-border: #0891b2; --tag-color: #22d3ee; --tag-bg: rgba(34,211,238,0.08);">Puzzle</span>
+        <span class="tag" style="--tag-border: #0891b2; --tag-color: #22d3ee; --tag-bg: rgba(34,211,238,0.08);">Classic</span>
+      </div>
+      <div class="card-play">
+        <span class="arrow">▶</span>
+        Play Tetris
+      </div>
+    </div>
+  </a>
+
+  <!-- 2. Hangman -->
+  <a href="hangman.html" class="game-card" data-game="hangman" id="card-hangman">
+    <div class="card-visual">
+      <div class="card-icon">📝</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Hangman</div>
+      <p class="card-description">
+        Guess the hidden word one letter at a time before the stick figure is 
+        completed. Hints are provided — but choose wisely!
+      </p>
+      <div class="card-tags">
+        <span class="tag" style="--tag-border: #b45309; --tag-color: #fbbf24; --tag-bg: rgba(245,158,11,0.08);">Word Game</span>
+        <span class="tag" style="--tag-border: #b45309; --tag-color: #fbbf24; --tag-bg: rgba(245,158,11,0.08);">Brain Teaser</span>
+      </div>
+      <div class="card-play">
+        <span class="arrow">▶</span>
+        Play Hangman
+      </div>
+    </div>
+  </a>
+
+  <!-- 3. Snake -->
+  <a href="snake.html" class="game-card" data-game="snake" id="card-snake">
+    <div class="card-visual">
+      <div class="card-icon">🐍</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Snake</div>
+      <p class="card-description">
+        Guide the ever-growing snake to gobble up food without crashing into 
+        the walls or your own tail. A retro arcade favourite!
+      </p>
+      <div class="card-tags">
+        <span class="tag" style="--tag-border: #16a34a; --tag-color: #4ade80; --tag-bg: rgba(74,222,128,0.08);">Arcade</span>
+        <span class="tag" style="--tag-border: #16a34a; --tag-color: #4ade80; --tag-bg: rgba(74,222,128,0.08);">Reflex</span>
+      </div>
+      <div class="card-play">
+        <span class="arrow">▶</span>
+        Play Snake
+      </div>
+    </div>
+  </a>
+
+  <!-- 4. Memory Cards -->
+  <a href="memory-cards.html" class="game-card" data-game="memory" id="card-memory">
+    <div class="card-visual">
+      <div class="card-icon">🃏</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Memory Cards</div>
+      <p class="card-description">
+        Flip cards and find matching pairs across 10 increasingly challenging levels. 
+        Test your memory, speed, and concentration!
+      </p>
+      <div class="card-tags">
+        <span class="tag" style="--tag-border: #7e22ce; --tag-color: #c084fc; --tag-bg: rgba(168,85,247,0.08);">Memory</span>
+        <span class="tag" style="--tag-border: #7e22ce; --tag-color: #c084fc; --tag-bg: rgba(168,85,247,0.08);">10 Levels</span>
+      </div>
+      <div class="card-play">
+        <span class="arrow">▶</span>
+        Play Memory
+      </div>
+    </div>
+  </a>
+
+  <!-- 5. Realm of Embers -->
+  <a href="fantasy-adventure.html" class="game-card" data-game="fantasy" id="card-fantasy">
+    <div class="card-visual">
+      <div class="card-icon">🔥</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">Realm of Embers</div>
+      <p class="card-description">
+        An epic fantasy RPG adventure. Explore a dark realm, fight monsters, collect 
+        Sunstone fragments, and challenge the Dragon-King Malachar!
+      </p>
+      <div class="card-tags">
+        <span class="tag" style="--tag-border: #dc2626; --tag-color: #f87171; --tag-bg: rgba(239,68,68,0.08);">RPG</span>
+        <span class="tag" style="--tag-border: #ea580c; --tag-color: #fb923c; --tag-bg: rgba(249,115,22,0.08);">Adventure</span>
+        <span class="tag" style="--tag-border: #ea580c; --tag-color: #fb923c; --tag-bg: rgba(249,115,22,0.08);">Fantasy</span>
+      </div>
+      <div class="card-play">
+        <span class="arrow">▶</span>
+        Play Adventure
+      </div>
+    </div>
+  </a>
+
+</div>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer class="footer">
+  <p class="footer-text">Built with ❤️ for the <span class="highlight">School Expo 2026</span></p>
+  <p class="footer-brand">LevelUp Studio</p>
+</footer>
+
+<!-- ══════════ SCRIPTS ══════════ -->
+<script>
+// ── Generate twinkling stars ──
+(function() {
+  const container = document.getElementById('bg-stars');
+  const count = 120;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.setProperty('--dur', (2 + Math.random() * 5).toFixed(1) + 's');
+    star.style.setProperty('--max-o', (0.3 + Math.random() * 0.7).toFixed(2));
+    star.style.animationDelay = (Math.random() * 5).toFixed(1) + 's';
+    if (Math.random() > 0.8) {
+      star.style.width = '3px';
+      star.style.height = '3px';
+    }
+    container.appendChild(star);
+  }
+})();
+
+// ── Card tilt on mouse move ──
+document.querySelectorAll('.game-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `translateY(-8px) scale(1.02) rotateY(${x * 6}deg) rotateX(${-y * 6}deg)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+// ── Theme toggle ──
+(function() {
+  const toggle = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const saved = localStorage.getItem('levelup-theme');
+
+  if (saved === 'light') {
+    document.body.classList.add('light-mode');
+    icon.textContent = '🌙';
+  }
+
+  toggle.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    icon.textContent = isLight ? '🌙' : '☀️';
+    localStorage.setItem('levelup-theme', isLight ? 'light' : 'dark');
+  });
+})();
+</script>
+
+</body>
+</html>

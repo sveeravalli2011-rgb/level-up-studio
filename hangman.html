@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hangman</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f1a;
+    --game-bg: #1a1a2e;
+    --text: #ffffff;
+    --text-muted: #8888aa;
+    --border: #333355;
+    --btn-hover: #222244;
+    --btn-border: #444477;
+    --btn-bg: #151528;
+    --svg-stroke: #ffffff;
+    --wrong-bg: #5c1818;
+    --wrong-color: #fecaca;
+    --wrong-border: #7f1d1d;
+    --correct-bg: #064e3b;
+    --correct-color: #d1fae5;
+    --correct-border: #065f46;
+  }
+  body.light-mode {
+    --bg: #f5f5f0;
+    --game-bg: white;
+    --text: #111;
+    --text-muted: #888;
+    --border: #ddd;
+    --btn-hover: #f0f0f0;
+    --btn-border: #ccc;
+    --btn-bg: white;
+    --svg-stroke: #222;
+    --wrong-bg: #fdecea;
+    --wrong-color: #b91c1c;
+    --wrong-border: #f5c6c6;
+    --correct-bg: #ecfdf5;
+    --correct-color: #15803d;
+    --correct-border: #b4e6c9;
+  }
+  body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+  .game { background: var(--game-bg); border-radius: 16px; padding: 2rem; max-width: 480px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.15); border: 1px solid var(--border); text-align: center; transition: all 0.3s; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 1.5rem; color: var(--text); }
+  svg line, svg circle { transition: opacity 0.2s; }
+  #hint { font-size: 13px; color: var(--text-muted); margin-bottom: 0.5rem; }
+  #word-display { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 1rem 0; }
+  .word-slot { width: 28px; height: 36px; border-bottom: 2px solid var(--text); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 600; text-transform: uppercase; color: var(--text); }
+  #message { font-size: 15px; font-weight: 600; min-height: 24px; margin: 0.5rem 0; }
+  #keyboard { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 360px; margin: 1rem auto; }
+  .letter-btn { width: 38px; height: 38px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--btn-border); border-radius: 8px; background: var(--btn-bg); color: var(--text); transition: background 0.15s, border-color 0.15s, color 0.15s; }
+  .letter-btn:hover:not(:disabled) { background: var(--btn-hover); }
+  .letter-btn:disabled { cursor: default; }
+  .letter-btn.wrong { background: var(--wrong-bg); color: var(--wrong-color); border-color: var(--wrong-border); }
+  .letter-btn.correct { background: var(--correct-bg); color: var(--correct-color); border-color: var(--correct-border); }
+  #new-game-btn { margin-top: 1rem; padding: 10px 24px; font-size: 14px; font-weight: 500; border: 1px solid var(--btn-border); border-radius: 8px; background: var(--btn-bg); cursor: pointer; color: var(--text); transition: all 0.2s; }
+  #new-game-btn:hover { background: var(--btn-hover); }
+  .back-home { position: fixed; top: 16px; left: 16px; z-index: 999; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--btn-bg); border: 1px solid var(--btn-border); border-radius: 10px; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-muted); text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s; }
+  .back-home:hover { background: var(--btn-hover); color: var(--text); border-color: var(--border); transform: translateX(-2px); }
+  .back-home .back-icon { font-size: 16px; }
+
+  /* ── THEME TOGGLE ── */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 999;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid #2a2a5a;
+    background: rgba(14, 14, 40, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #fbbf24;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.35s ease;
+    outline: none;
+  }
+  .theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+    border-color: #fbbf24;
+    box-shadow: 0 4px 24px rgba(251, 191, 36, 0.2);
+  }
+  body.light-mode .theme-toggle {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #d0d5e0;
+    color: #7c3aed;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+  body.light-mode .theme-toggle:hover {
+    border-color: #7c3aed;
+    box-shadow: 0 4px 24px rgba(124, 58, 237, 0.15);
+  }
+  .theme-toggle .icon { transition: transform 0.35s ease; display: inline-block; }
+  .theme-toggle:hover .icon { transform: rotate(20deg); }
+</style>
+</head>
+<body>
+<a href="index.html" class="back-home"><span class="back-icon">←</span> Home</a>
+<div class="game">
+  <h1>Hangman</h1>
+
+  <svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+    <line x1="10" y1="155" x2="150" y2="155" stroke="var(--text-muted)" stroke-width="2"/>
+    <line x1="40" y1="155" x2="40" y2="10" stroke="var(--text-muted)" stroke-width="2"/>
+    <line x1="40" y1="10" x2="100" y2="10" stroke="var(--text-muted)" stroke-width="2"/>
+    <line x1="100" y1="10" x2="100" y2="30" stroke="var(--text-muted)" stroke-width="2"/>
+    <circle id="h-head" cx="100" cy="43" r="13" fill="none" stroke="var(--svg-stroke)" stroke-width="2" style="display:none"/>
+    <line id="h-body" x1="100" y1="56" x2="100" y2="100" stroke="var(--svg-stroke)" stroke-width="2" style="display:none"/>
+    <line id="h-larm" x1="100" y1="68" x2="75" y2="88" stroke="var(--svg-stroke)" stroke-width="2" style="display:none"/>
+    <line id="h-rarm" x1="100" y1="68" x2="125" y2="88" stroke="var(--svg-stroke)" stroke-width="2" style="display:none"/>
+    <line id="h-lleg" x1="100" y1="100" x2="75" y2="128" stroke="var(--svg-stroke)" stroke-width="2" style="display:none"/>
+    <line id="h-rleg" x1="100" y1="100" x2="125" y2="128" stroke="var(--svg-stroke)" stroke-width="2" style="display:none"/>
+  </svg>
+
+  <div id="hint"></div>
+  <div id="word-display"></div>
+  <div id="message"></div>
+  <div id="keyboard"></div>
+  <button id="new-game-btn" onclick="newGame()">New game</button>
+</div>
+
+<script>
+const wordList = [
+  {word: "python", hint: "A programming language"},
+  {word: "elephant", hint: "Largest land animal"},
+  {word: "guitar", hint: "A stringed instrument"},
+  {word: "jupiter", hint: "Largest planet in our solar system"},
+  {word: "chocolate", hint: "Sweet treat from cacao"},
+  {word: "volcano", hint: "Mountain that erupts"},
+  {word: "umbrella", hint: "Keeps you dry in the rain"},
+  {word: "dolphin", hint: "Intelligent ocean mammal"},
+  {word: "library", hint: "Where books live"},
+  {word: "compass", hint: "Navigation tool"},
+  {word: "butterfly", hint: "Insect that starts as a caterpillar"},
+  {word: "telescope", hint: "Used to see stars"},
+  {word: "keyboard", hint: "You type on this"},
+  {word: "diamond", hint: "Hardest natural material"},
+  {word: "jungle", hint: "Dense tropical forest"},
+  {word: "cactus", hint: "Desert plant with spines"},
+  {word: "hurricane", hint: "Powerful tropical storm"},
+  {word: "penguin", hint: "Bird that cannot fly"},
+  {word: "castle", hint: "Medieval fortified building"},
+  {word: "magnet", hint: "Attracts iron objects"},
+];
+
+const parts = ["h-head","h-body","h-larm","h-rarm","h-lleg","h-rleg"];
+let word, hint, guessed, wrong, gameOver;
+
+function newGame() {
+  const item = wordList[Math.floor(Math.random() * wordList.length)];
+  word = item.word; hint = item.hint;
+  guessed = new Set(); wrong = 0; gameOver = false;
+  parts.forEach(p => document.getElementById(p).style.display = "none");
+  document.getElementById("hint").textContent = "Hint: " + hint;
+  const msg = document.getElementById("message");
+  msg.textContent = ""; msg.style.color = "#111";
+  renderWord(); renderKeyboard();
+}
+
+function renderWord() {
+  const display = document.getElementById("word-display");
+  display.innerHTML = "";
+  for (const ch of word) {
+    const slot = document.createElement("div");
+    slot.className = "word-slot";
+    slot.textContent = guessed.has(ch) ? ch : "";
+    display.appendChild(slot);
+  }
+}
+
+function renderKeyboard() {
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  for (let i = 65; i <= 90; i++) {
+    const ch = String.fromCharCode(i).toLowerCase();
+    const btn = document.createElement("button");
+    btn.className = "letter-btn";
+    btn.textContent = ch.toUpperCase();
+    btn.id = "btn-" + ch;
+    btn.onclick = () => guess(ch);
+    kb.appendChild(btn);
+  }
+}
+
+function guess(ch) {
+  if (gameOver || guessed.has(ch)) return;
+  guessed.add(ch);
+  const btn = document.getElementById("btn-" + ch);
+  if (word.includes(ch)) {
+    btn.classList.add("correct");
+    renderWord();
+    if ([...word].every(c => guessed.has(c))) endGame(true);
+  } else {
+    btn.classList.add("wrong");
+    if (parts[wrong]) document.getElementById(parts[wrong]).style.display = "";
+    wrong++;
+    if (wrong >= parts.length) endGame(false);
+  }
+  btn.disabled = true;
+}
+
+function endGame(won) {
+  gameOver = true;
+  const msg = document.getElementById("message");
+  if (won) {
+    msg.textContent = "You won! 🎉";
+    msg.style.color = document.body.classList.contains("light-mode") ? "#15803d" : "#4ade80";
+  } else {
+    msg.textContent = "Game over! The word was: " + word.toUpperCase();
+    msg.style.color = document.body.classList.contains("light-mode") ? "#b91c1c" : "#f87171";
+    const slots = document.getElementById("word-display").children;
+    [...slots].forEach((s, i) => { s.textContent = word[i]; });
+  }
+  document.querySelectorAll(".letter-btn").forEach(b => b.disabled = true);
+}
+
+document.addEventListener("keydown", e => {
+  const ch = e.key.toLowerCase();
+  if (ch.length === 1 && ch >= "a" && ch <= "z" && !gameOver) guess(ch);
+});
+
+newGame();
+</script>
+
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+  <span class="icon" id="theme-icon">☀️</span>
+</button>
+<script>
+(function() {
+  const toggle = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  
+  function updateTheme(isLight) {
+    if (isLight) {
+      document.body.classList.add('light-mode');
+      icon.textContent = '🌙';
+    } else {
+      document.body.classList.remove('light-mode');
+      icon.textContent = '☀️';
+    }
+  }
+
+  // Load initial theme
+  const saved = localStorage.getItem('levelup-theme');
+  updateTheme(saved === 'light');
+
+  toggle.addEventListener('click', () => {
+    const isLight = !document.body.classList.contains('light-mode');
+    updateTheme(isLight);
+    localStorage.setItem('levelup-theme', isLight ? 'light' : 'dark');
+  });
+})();
+</script>
+</body>
+</html>

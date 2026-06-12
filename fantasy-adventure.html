@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realm of Embers — Fantasy Adventure</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+  --bg: #0d0b0a;
+  --bg2: #161210;
+  --bg3: #1e1a17;
+  --bg4: #261f1a;
+  --gold: #c9943a;
+  --gold2: #e8b96a;
+  --red: #c0392b;
+  --red2: #e74c3c;
+  --green: #2ecc71;
+  --blue: #3498db;
+  --purple: #9b59b6;
+  --text: #e8dcc8;
+  --text2: #a89880;
+  --border: #3a2e22;
+  --hp: #c0392b;
+  --mp: #2980b9;
+}
+body.light-mode {
+  --bg: #f5efe2;
+  --bg2: #eae3d2;
+  --bg3: #dfd6c0;
+  --bg4: #d4cbb2;
+  --gold: #9e6d15;
+  --gold2: #c4871d;
+  --red: #962d22;
+  --red2: #c0392b;
+  --green: #27ae60;
+  --blue: #2980b9;
+  --purple: #8e44ad;
+  --text: #2c251d;
+  --text2: #5c4e3f;
+  --border: #dfd6c0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Crimson Text', serif; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+
+/* ─── SCREENS ─── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ─── TITLE SCREEN ─── */
+#title-screen {
+  align-items: center; justify-content: center; text-align: center;
+  background: radial-gradient(ellipse at center, #1a1008 0%, #0d0b0a 70%);
+  position: relative; overflow: hidden;
+}
+body.light-mode #title-screen {
+  background: radial-gradient(ellipse at center, #eae3d2 0%, #f5efe2 70%);
+}
+.title-ember { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--gold); animation: float linear infinite; pointer-events: none; }
+@keyframes float { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:1} 90%{opacity:0.6} 100%{transform:translateY(-10vh) scale(1.5);opacity:0} }
+.title-content { position: relative; z-index: 2; }
+.title-rune { font-size: 64px; margin-bottom: 0.5rem; animation: pulse 3s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{text-shadow:0 0 20px #c9943a88} 50%{text-shadow:0 0 40px #c9943a,0 0 60px #c9943a44} }
+h1.game-title { font-family: 'Cinzel', serif; font-size: clamp(28px,6vw,52px); font-weight: 700; color: var(--gold2); letter-spacing: 4px; text-shadow: 0 0 30px #c9943a66; margin-bottom: 0.25rem; }
+.game-subtitle { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 6px; color: var(--text2); text-transform: uppercase; margin-bottom: 2rem; }
+.title-lore { max-width: 480px; font-size: 17px; line-height: 1.8; color: var(--text2); margin-bottom: 2.5rem; font-style: italic; }
+.btn { font-family: 'Cinzel', serif; font-size: 14px; letter-spacing: 2px; padding: 12px 32px; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; border-radius: 2px; transition: all 0.2s; text-transform: uppercase; }
+.btn:hover { background: var(--gold); color: var(--bg); }
+.btn-primary { background: var(--gold); color: var(--bg); font-weight: 600; }
+.btn-primary:hover { background: var(--gold2); }
+.btn-danger { border-color: var(--red2); color: var(--red2); }
+.btn-danger:hover { background: var(--red2); color: white; }
+
+/* ─── MAIN GAME ─── */
+#game-screen { flex-direction: column; }
+.game-layout { display: grid; grid-template-columns: 220px 1fr 200px; gap: 1px; background: var(--border); flex: 1; min-height: 0; }
+.panel { background: var(--bg2); padding: 1rem; overflow-y: auto; transition: background 0.3s, color 0.3s; }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 999;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #2a2a5a;
+  background: rgba(14, 14, 40, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fbbf24;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.35s ease;
+  outline: none;
+}
+.theme-toggle:hover {
+  transform: scale(1.1) rotate(15deg);
+  border-color: #fbbf24;
+  box-shadow: 0 4px 24px rgba(251, 191, 36, 0.2);
+}
+body.light-mode .theme-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #d0d5e0;
+  color: #7c3aed;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+body.light-mode .theme-toggle:hover {
+  border-color: #7c3aed;
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.15);
+}
+.theme-toggle .icon { transition: transform 0.35s ease; display: inline-block; }
+.theme-toggle:hover .icon { transform: rotate(20deg); }
+
+/* Left panel */
+.char-name { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold); margin-bottom: 0.75rem; text-align: center; }
+.stat-bar-wrap { margin-bottom: 8px; }
+.stat-label { font-size: 12px; color: var(--text2); display: flex; justify-content: space-between; margin-bottom: 3px; }
+.stat-bar { height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; }
+.stat-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.hp-fill { background: var(--hp); }
+.mp-fill { background: var(--mp); }
+.xp-fill { background: var(--purple); }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 1rem 0; }
+.stat-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 6px; text-align: center; }
+.stat-box .val { font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold2); }
+.stat-box .lbl { font-size: 11px; color: var(--text2); }
+.section-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; color: var(--text2); text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 8px; margin-top: 1rem; }
+.inventory-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 14px; cursor: pointer; }
+.inventory-item:hover { color: var(--gold); }
+.item-qty { font-size: 12px; color: var(--text2); }
+.equip-slot { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+.equip-slot .slot-name { color: var(--text2); }
+.equip-slot .slot-item { color: var(--gold2); }
+
+/* Center panel */
+#main-panel { background: var(--bg2); padding: 0; display: flex; flex-direction: column; }
+#scene-art { height: 160px; background: var(--bg3); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+#scene-art canvas { width: 100%; height: 100%; }
+#location-name { font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold); padding: 1rem 1.5rem 0.25rem; }
+#scene-desc { padding: 0 1.5rem 1rem; font-size: 16px; line-height: 1.8; color: var(--text); min-height: 80px; }
+#log { flex: 1; overflow-y: auto; padding: 0.75rem 1.5rem; border-top: 1px solid var(--border); max-height: 180px; }
+.log-entry { font-size: 14px; line-height: 1.6; padding: 2px 0; border-bottom: 1px solid #1a1612; }
+.log-entry.combat { color: #e8a87c; }
+.log-entry.loot { color: var(--gold2); }
+.log-entry.story { color: #a8c8e8; font-style: italic; }
+.log-entry.system { color: var(--text2); }
+.log-entry.danger { color: var(--red2); }
+#action-area { padding: 1rem 1.5rem; border-top: 1px solid var(--border); background: var(--bg3); }
+#action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.action-btn { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1px; padding: 8px 16px; border: 1px solid var(--border); background: var(--bg4); color: var(--text); cursor: pointer; border-radius: 2px; transition: all 0.15s; }
+.action-btn:hover { border-color: var(--gold); color: var(--gold); }
+.action-btn.primary { border-color: var(--gold); color: var(--gold); }
+.action-btn.danger { border-color: var(--red); color: var(--red); }
+.action-btn.magic { border-color: var(--purple); color: var(--purple); }
+.action-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* Right panel */
+.mini-map { display: grid; grid-template-columns: repeat(5,1fr); gap: 2px; margin-bottom: 1rem; }
+.map-cell { aspect-ratio: 1; border-radius: 2px; background: var(--bg4); }
+.map-cell.visited { background: var(--bg3); border: 1px solid var(--border); }
+.map-cell.current { background: var(--gold); }
+.map-cell.enemy { background: var(--red); }
+.map-cell.town { background: var(--green); opacity: 0.7; }
+.map-cell.boss { background: var(--purple); }
+.quest-item { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.quest-name { color: var(--gold2); font-size: 12px; font-family: 'Cinzel', serif; }
+.quest-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-top: 2px; }
+
+/* ─── BATTLE SCREEN ─── */
+#battle-screen { background: var(--bg); align-items: stretch; }
+.battle-layout { display: grid; grid-template-rows: 1fr auto; height: 100vh; max-width: 700px; margin: 0 auto; width: 100%; padding: 1.5rem; gap: 1rem; }
+.combatants { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+.combatant { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; }
+.combatant.player-side { border-color: var(--gold); }
+.combatant.enemy-side { border-color: var(--red); }
+.combatant-name { font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold); margin-bottom: 0.5rem; }
+.combatant.enemy-side .combatant-name { color: var(--red2); }
+.combatant-sprite { font-size: 56px; text-align: center; margin: 0.75rem 0; animation: bob 2s ease-in-out infinite; }
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.combatant-sprite.shake { animation: shake 0.4s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+.vs-text { font-family: 'Cinzel', serif; font-size: 22px; color: var(--red2); text-shadow: 0 0 20px var(--red); }
+.battle-log-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; height: 120px; overflow-y: auto; }
+.battle-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.spell-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0.5rem 0; }
+.damage-flash { animation: dmgflash 0.3s; }
+@keyframes dmgflash { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* ─── SHOP / DIALOG ─── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: #000a; z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--gold); border-radius: 6px; padding: 1.5rem; max-width: 480px; width: 90%; max-height: 80vh; overflow-y: auto; }
+.modal h2 { font-family: 'Cinzel', serif; color: var(--gold); margin-bottom: 1rem; font-size: 18px; }
+.shop-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.shop-item-info .name { color: var(--text); font-size: 15px; }
+.shop-item-info .desc { font-size: 12px; color: var(--text2); }
+.gold-price { color: var(--gold); font-family: 'Cinzel', serif; font-size: 14px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 1rem; justify-content: flex-end; }
+
+/* ─── TOPBAR ─── */
+.topbar { background: var(--bg3); border-bottom: 1px solid var(--border); padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 3px; color: var(--gold2); }
+.topbar-gold { font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.back-home { position: fixed; top: 16px; left: 16px; z-index: 999; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #161210; border: 1px solid #3a2e22; border-radius: 10px; font-family: 'Cinzel', serif; font-size: 12px; font-weight: 600; color: #a89880; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: all 0.2s; letter-spacing: 1px; }
+.back-home:hover { background: #1e1a17; color: #c9943a; border-color: #c9943a; transform: translateX(-2px); }
+.back-home .back-icon { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-home"><span class="back-icon">←</span> Home</a>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen" class="screen active">
+  <div class="title-content">
+    <div class="title-rune">🔥</div>
+    <h1 class="game-title">Realm of Embers</h1>
+    <div class="game-subtitle">A Fantasy Adventure</div>
+    <p class="title-lore">The Dragon-King Malachar has shattered the Sunstone, plunging the realm into darkness. You are the last ember of hope — a wandering hero who must reclaim the fragments, slay the beasts that guard them, and face the Dragon-King himself.</p>
+    <button class="btn btn-primary" onclick="startGame()">Begin Your Journey</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen" class="screen">
+  <div class="topbar">
+    <div class="topbar-title">⚔ Realm of Embers</div>
+    <div class="topbar-gold">🪙 Gold: <span id="gold-display">50</span></div>
+  </div>
+  <div class="game-layout">
+    <!-- Left: Character -->
+    <div class="panel" id="char-panel">
+      <div class="char-name" id="char-name-display">Hero</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-label"><span>❤ HP</span><span id="hp-text">100/100</span></div>
+        <div class="stat-bar"><div class="stat-fill hp-fill" id="hp-bar" style="width:100%"></div></div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="stat-label"><span>✦ MP</span><span id="mp-text">50/50</span></div>
+        <div class="stat-bar"><div class="stat-fill mp-fill" id="mp-bar" style="width:100%"></div></div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="stat-label"><span>★ XP</span><span id="xp-text">0/100</span></div>
+        <div class="stat-bar"><div class="stat-fill xp-fill" id="xp-bar" style="width:0%"></div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="val" id="stat-atk">12</div><div class="lbl">Attack</div></div>
+        <div class="stat-box"><div class="val" id="stat-def">8</div><div class="lbl">Defense</div></div>
+        <div class="stat-box"><div class="val" id="stat-spd">10</div><div class="lbl">Speed</div></div>
+        <div class="stat-box"><div class="val" id="stat-lvl">1</div><div class="lbl">Level</div></div>
+      </div>
+      <div class="section-title">Equipment</div>
+      <div class="equip-slot"><span class="slot-name">Weapon</span><span class="slot-item" id="eq-weapon">Iron Sword</span></div>
+      <div class="equip-slot"><span class="slot-name">Armor</span><span class="slot-item" id="eq-armor">Leather Armor</span></div>
+      <div class="equip-slot"><span class="slot-name">Ring</span><span class="slot-item" id="eq-ring">—</span></div>
+      <div class="section-title">Inventory</div>
+      <div id="inventory-list"></div>
+    </div>
+
+    <!-- Center: Main -->
+    <div id="main-panel">
+      <div id="scene-art"><canvas id="scene-canvas" width="600" height="160"></canvas></div>
+      <div id="location-name">The Crossroads</div>
+      <div id="scene-desc"></div>
+      <div id="log"></div>
+      <div id="action-area">
+        <div id="action-buttons"></div>
+      </div>
+    </div>
+
+    <!-- Right: Map & Quests -->
+    <div class="panel">
+      <div class="section-title">World Map</div>
+      <div class="mini-map" id="mini-map"></div>
+      <div class="section-title">Active Quests</div>
+      <div id="quest-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BATTLE SCREEN -->
+<div id="battle-screen" class="screen">
+  <div class="battle-layout">
+    <div>
+      <div class="combatants">
+        <div class="combatant player-side">
+          <div class="combatant-name" id="b-player-name">Hero</div>
+          <div class="combatant-sprite" id="b-player-sprite">🧙</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-label"><span>HP</span><span id="b-player-hp">100/100</span></div>
+            <div class="stat-bar"><div class="stat-fill hp-fill" id="b-player-hp-bar" style="width:100%"></div></div>
+          </div>
+          <div class="stat-bar-wrap">
+            <div class="stat-label"><span>MP</span><span id="b-player-mp">50/50</span></div>
+            <div class="stat-bar"><div class="stat-fill mp-fill" id="b-player-mp-bar" style="width:100%"></div></div>
+          </div>
+        </div>
+        <div class="vs-text">VS</div>
+        <div class="combatant enemy-side">
+          <div class="combatant-name" id="b-enemy-name">Enemy</div>
+          <div class="combatant-sprite" id="b-enemy-sprite">👹</div>
+          <div class="stat-bar-wrap">
+            <div class="stat-label"><span>HP</span><span id="b-enemy-hp">50/50</span></div>
+            <div class="stat-bar"><div class="stat-fill hp-fill" id="b-enemy-hp-bar" style="width:100%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="battle-log-wrap" id="battle-log"></div>
+    </div>
+    <div>
+      <div class="battle-actions" id="battle-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal-overlay" id="shop-modal">
+  <div class="modal">
+    <h2>🏪 <span id="shop-name">The Wanderer's Market</span></h2>
+    <div id="shop-items"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeShop()">Leave Shop</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIALOG MODAL -->
+<div class="modal-overlay" id="dialog-modal">
+  <div class="modal">
+    <h2 id="dialog-title">Stranger</h2>
+    <p id="dialog-text" style="line-height:1.8;margin-bottom:1rem;font-size:16px;"></p>
+    <div class="modal-actions" id="dialog-choices"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════
+const G = {
+  player: {
+    name: "Kaelthas",
+    level: 1, xp: 0, xpNext: 100,
+    hp: 100, hpMax: 100,
+    mp: 50, mpMax: 50,
+    atk: 12, def: 8, spd: 10,
+    gold: 50,
+    weapon: "Iron Sword", armor: "Leather Armor", ring: null,
+    weaponAtk: 4, armorDef: 2,
+    inventory: [
+      {name:"Health Potion", qty:3, type:"consumable", effect:"hp", val:40},
+      {name:"Mana Potion", qty:1, type:"consumable", effect:"mp", val:25},
+    ],
+    spells: [
+      {name:"Fireball", cost:10, dmg:22, desc:"Hurls a ball of fire"},
+      {name:"Ice Lance", cost:8, dmg:18, desc:"Pierces with frozen shard"},
+      {name:"Heal", cost:15, dmg:0, desc:"Restores 35 HP", heal:35},
+      {name:"Thunder", cost:20, dmg:35, desc:"Calls lightning from the sky"},
+    ],
+    statusEffects: [],
+    sunstones: 0,
+  },
+  location: 0,
+  visitedLocations: new Set([0]),
+  defeatedEnemies: new Set(),
+  flags: {},
+  quests: [
+    {name:"Shards of the Sunstone", desc:"Collect 3 fragments to restore the realm.", done:false},
+    {name:"The Dragon King", desc:"Defeat Malachar and end the darkness.", done:false},
+  ],
+  battle: null,
+  battleTurn: "player",
+  battleActive: false,
+};
+
+// ══════════════════════════════════════════════════════
+//  WORLD DATA
+// ══════════════════════════════════════════════════════
+const LOCATIONS = [
+  {
+    id:0, name:"The Crossroads", mapPos:[2,2], type:"town",
+    art:"crossroads",
+    desc:"A weathered stone marker stands where four roads meet. The air smells of distant smoke. A merchant's tent flaps in the cold wind to the east.",
+    actions:[
+      {label:"→ Dark Forest", go:1},
+      {label:"→ Village of Ashfen", go:3},
+      {label:"→ Ruined Keep", go:5},
+      {label:"Talk to Merchant", fn:"openShop", data:"merchant1"},
+    ]
+  },
+  {
+    id:1, name:"The Dark Forest", mapPos:[1,2], type:"danger",
+    art:"forest",
+    desc:"Gnarled black trees claw at a moonless sky. Something growls between the shadows. The path deepens ahead.",
+    actions:[
+      {label:"Venture Deeper", go:2},
+      {label:"← Back to Crossroads", go:0},
+      {label:"Search for Herbs", fn:"searchHerbs"},
+    ]
+  },
+  {
+    id:2, name:"Forest Heart", mapPos:[0,2], type:"enemy",
+    art:"forest",
+    desc:"A clearing filled with luminous mushrooms. A Sunstone Fragment gleams on the altar — but a massive Forest Troll bars your path.",
+    actions:[
+      {label:"Fight the Forest Troll", fn:"startBattle", data:"forestTroll"},
+      {label:"← Retreat", go:1},
+    ]
+  },
+  {
+    id:3, name:"Village of Ashfen", mapPos:[2,1], type:"town",
+    art:"village",
+    desc:"A small village struggling under Malachar's shadow. A blacksmith hammers wearily, and a healer tends to the wounded.",
+    actions:[
+      {label:"Visit Healer", fn:"visitHealer"},
+      {label:"Visit Blacksmith", fn:"openShop", data:"blacksmith"},
+      {label:"Talk to Elder", fn:"talkElder"},
+      {label:"← Back to Crossroads", go:0},
+      {label:"→ Mountain Pass", go:4},
+    ]
+  },
+  {
+    id:4, name:"Mountain Pass", mapPos:[2,0], type:"enemy",
+    art:"mountain",
+    desc:"A treacherous narrow path between two peaks. Ice Wraiths haunt these heights, and a Sunstone Fragment is said to rest in the summit shrine.",
+    actions:[
+      {label:"Fight Ice Wraith", fn:"startBattle", data:"iceWraith"},
+      {label:"Climb to Summit", fn:"climbSummit"},
+      {label:"← Back to Village", go:3},
+    ]
+  },
+  {
+    id:5, name:"Ruined Keep", mapPos:[3,2], type:"danger",
+    art:"ruins",
+    desc:"The crumbling fortress of a forgotten king. Torches still burn with sickly green flame. Malachar's undead guards roam the halls.",
+    actions:[
+      {label:"Fight Skeleton Knight", fn:"startBattle", data:"skeletonKnight"},
+      {label:"Search the Vaults", fn:"searchVaults"},
+      {label:"→ Dragon's Sanctum", fn:"goSanctum"},
+      {label:"← Back to Crossroads", go:0},
+    ]
+  },
+  {
+    id:6, name:"Dragon's Sanctum", mapPos:[4,2], type:"boss",
+    art:"dragon",
+    desc:"The air burns. Pillars of obsidian flank a throne of bones. Malachar the Dragon-King rises before you, and his eyes glow like dying suns.",
+    actions:[
+      {label:"⚔ Challenge Malachar!", fn:"startBattle", data:"malachar"},
+      {label:"← Flee!", go:5},
+    ]
+  },
+];
+
+const ENEMIES = {
+  forestTroll: {name:"Forest Troll", sprite:"🧌", hp:60, hpMax:60, atk:14, def:4, xp:35, gold:20,
+    loot:[{name:"Troll Hide",qty:1},{name:"Health Potion",qty:1,type:"consumable",effect:"hp",val:40}],
+    sunstone:true, location:2,
+    moves:["Club Smash","Roar","Regenerate"]},
+  iceWraith: {name:"Ice Wraith", sprite:"👻", hp:50, hpMax:50, atk:18, def:2, xp:40, gold:25,
+    loot:[{name:"Wraith Essence",qty:1},{name:"Mana Potion",qty:1,type:"consumable",effect:"mp",val:25}],
+    sunstone:true, location:4,
+    moves:["Frost Bite","Soul Drain","Blizzard"]},
+  skeletonKnight: {name:"Skeleton Knight", sprite:"💀", hp:70, hpMax:70, atk:16, def:8, xp:45, gold:30,
+    loot:[{name:"Cursed Bones",qty:1},{name:"Iron Shield",equip:true,slot:"ring",val:3,statName:"def"}],
+    sunstone:false, location:5,
+    moves:["Bone Slash","Shield Bash","Death Rattle"]},
+  malachar: {name:"Malachar", sprite:"🐉", hp:200, hpMax:200, atk:28, def:12, xp:300, gold:200,
+    loot:[{name:"Dragon Crown",qty:1}],
+    sunstone:false, isBoss:true,
+    moves:["Dragon Breath","Tail Swipe","Dark Nova","Terrorize"]},
+};
+
+const SHOPS = {
+  merchant1: {name:"The Wanderer's Market", items:[
+    {name:"Health Potion", price:15, type:"consumable", effect:"hp", val:40, desc:"Restores 40 HP"},
+    {name:"Mana Potion", price:20, type:"consumable", effect:"mp", val:25, desc:"Restores 25 MP"},
+    {name:"Antidote", price:12, type:"consumable", effect:"status", val:"poison", desc:"Cures poison"},
+    {name:"Elven Boots", price:60, type:"equip", slot:"ring", val:3, statName:"spd", desc:"+3 Speed (ring slot)"},
+  ]},
+  blacksmith: {name:"Ashfen Blacksmith", items:[
+    {name:"Steel Sword", price:80, type:"equip", slot:"weapon", val:8, statName:"atk", desc:"+8 Attack"},
+    {name:"Chain Mail", price:90, type:"equip", slot:"armor", val:6, statName:"def", desc:"+6 Defense"},
+    {name:"Battle Axe", price:110, type:"equip", slot:"weapon", val:12, statName:"atk", desc:"+12 Attack"},
+    {name:"Tower Shield", price:100, type:"equip", slot:"ring", val:5, statName:"def", desc:"+5 Defense (ring slot)"},
+  ]},
+};
+
+// ══════════════════════════════════════════════════════
+//  CANVAS ART
+// ══════════════════════════════════════════════════════
+function drawScene(type) {
+  const canvas = document.getElementById("scene-canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = canvas.offsetWidth || 600;
+  canvas.height = 160;
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  const arts = {
+    crossroads: ()=>{
+      // sky
+      const sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0,"#1a1525"); sky.addColorStop(1,"#2d1f10");
+      ctx.fillStyle = sky; ctx.fillRect(0,0,w,h);
+      // road
+      ctx.fillStyle="#3d3020"; ctx.beginPath(); ctx.moveTo(w/2-15,h); ctx.lineTo(w/2+15,h); ctx.lineTo(w/2+5,0); ctx.lineTo(w/2-5,0); ctx.fill();
+      ctx.fillStyle="#3d3020"; ctx.beginPath(); ctx.moveTo(0,h/2-10); ctx.lineTo(w,h/2-10); ctx.lineTo(w,h/2+10); ctx.lineTo(0,h/2+10); ctx.fill();
+      // stone marker
+      ctx.fillStyle="#5a4a38"; roundRectC(ctx,w/2-8,h/2-30,16,30,3); ctx.fill();
+      ctx.fillStyle="#4a3c2c"; roundRectC(ctx,w/2-14,h/2,28,8,2); ctx.fill();
+      // stars
+      for(let i=0;i<40;i++){ ctx.fillStyle=`rgba(255,255,200,${Math.random()*0.8+0.2})`; ctx.beginPath(); ctx.arc(Math.random()*w,Math.random()*(h*0.5),1,0,Math.PI*2); ctx.fill(); }
+      // moon
+      ctx.fillStyle="#e8dcc8"; ctx.beginPath(); ctx.arc(w*0.85,25,16,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#1a1525"; ctx.beginPath(); ctx.arc(w*0.85+6,22,13,0,Math.PI*2); ctx.fill();
+    },
+    forest: ()=>{
+      const sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0,"#0a0a0f"); sky.addColorStop(1,"#141008");
+      ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+      // ground
+      ctx.fillStyle="#1a1a0a"; ctx.fillRect(0,h*0.65,w,h*0.35);
+      // trees
+      for(let i=0;i<12;i++){
+        const x=i*(w/11); const th=h*0.4+Math.random()*h*0.3;
+        ctx.fillStyle=`rgb(${20+Math.random()*10},${15+Math.random()*8},${5})`;
+        ctx.fillRect(x+8,h-th,6,th);
+        ctx.fillStyle=`rgb(${10+Math.random()*15},${30+Math.random()*10},${5})`;
+        ctx.beginPath(); ctx.moveTo(x,h-th+20); ctx.lineTo(x+11,h-th-30); ctx.lineTo(x+22,h-th+20); ctx.fill();
+      }
+      // glowing eyes
+      for(let i=0;i<3;i++){
+        ctx.fillStyle="#ff4400"; ctx.beginPath(); ctx.arc(60+i*180+Math.random()*40,h*0.55,3,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#ff4400"; ctx.beginPath(); ctx.arc(60+i*180+Math.random()*40+10,h*0.55,3,0,Math.PI*2); ctx.fill();
+      }
+    },
+    village: ()=>{
+      const sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0,"#1a1020"); sky.addColorStop(1,"#2d1a0a");
+      ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle="#1e1408"; ctx.fillRect(0,h*0.6,w,h*0.4);
+      const houses=[{x:60,y:h*0.6,w:60,h:50,roof:"#5a2020"},{x:180,y:h*0.55,w:80,h:60,roof:"#3a3020"},{x:320,y:h*0.58,w:70,h:55,roof:"#2a4020"},{x:450,y:h*0.6,w:65,h:50,roof:"#4a2030"}];
+      houses.forEach(hs=>{
+        ctx.fillStyle="#3d2d1a"; ctx.fillRect(hs.x,hs.y,hs.w,hs.h);
+        ctx.fillStyle=hs.roof; ctx.beginPath(); ctx.moveTo(hs.x-5,hs.y); ctx.lineTo(hs.x+hs.w/2,hs.y-25); ctx.lineTo(hs.x+hs.w+5,hs.y); ctx.fill();
+        ctx.fillStyle="#c9943a55"; ctx.fillRect(hs.x+hs.w*0.3,hs.y+10,15,15);
+      });
+      for(let i=0;i<30;i++){ctx.fillStyle=`rgba(255,255,200,${Math.random()*0.6+0.1})`; ctx.beginPath(); ctx.arc(Math.random()*w,Math.random()*h*0.5,1,0,Math.PI*2); ctx.fill();}
+    },
+    mountain: ()=>{
+      const sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0,"#050515"); sky.addColorStop(1,"#15101a");
+      ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+      // mountains
+      [[w*0.1,h,w*0.4,h*0.1,w*0.7,h],[w*0.4,h,w*0.65,h*0.18,w*0.9,h],[0,h,w*0.2,h*0.25,w*0.45,h]].forEach(pts=>{
+        ctx.fillStyle="#251c2c"; ctx.beginPath(); ctx.moveTo(pts[0],pts[1]); ctx.lineTo(pts[2],pts[3]); ctx.lineTo(pts[4],pts[5]); ctx.fill();
+      });
+      // snow caps
+      ctx.fillStyle="rgba(200,220,255,0.6)";
+      ctx.beginPath(); ctx.moveTo(w*0.4,h*0.1+10); ctx.lineTo(w*0.34,h*0.22); ctx.lineTo(w*0.46,h*0.22); ctx.fill();
+      for(let i=0;i<50;i++){ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.5+0.1})`; ctx.beginPath(); ctx.arc(Math.random()*w,Math.random()*h*0.4,0.8,0,Math.PI*2); ctx.fill();}
+    },
+    ruins: ()=>{
+      const sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0,"#050508"); sky.addColorStop(1,"#10080a");
+      ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle="#151010"; ctx.fillRect(0,h*0.55,w,h*0.45);
+      // pillars
+      for(let i=0;i<6;i++){
+        const x=50+i*100; const ph=60+Math.random()*50;
+        ctx.fillStyle="#2a2018"; ctx.fillRect(x,h*0.55-ph,20,ph);
+        ctx.fillStyle="#1a1510"; ctx.fillRect(x-5,h*0.55-ph-10,30,10);
+      }
+      // green torches
+      for(let i=0;i<4;i++){
+        const x=80+i*140; const y=h*0.45;
+        ctx.fillStyle="#004400"; ctx.beginPath(); ctx.arc(x,y,8,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="rgba(0,180,0,0.3)"; ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.fill();
+      }
+    },
+    dragon: ()=>{
+      const sky = ctx.createLinearGradient(0,0,0,h);
+      sky.addColorStop(0,"#100005"); sky.addColorStop(1,"#200a00");
+      ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+      ctx.fillStyle="#150500"; ctx.fillRect(0,h*0.6,w,h*0.4);
+      // lava cracks
+      ctx.strokeStyle="#c9390a"; ctx.lineWidth=1.5;
+      for(let i=0;i<8;i++){ctx.beginPath(); ctx.moveTo(Math.random()*w,h); ctx.lineTo(Math.random()*w,h*0.65); ctx.stroke();}
+      // pillars
+      [[80,h],[w-80,h],[180,h],[w-180,h]].forEach(([x,y])=>{
+        ctx.fillStyle="#1a0808"; ctx.fillRect(x-15,y-100,30,100);
+        ctx.fillStyle="#100505"; ctx.fillRect(x-20,y-110,40,12);
+      });
+      // glow
+      const glow = ctx.createRadialGradient(w/2,h*0.4,10,w/2,h*0.4,100);
+      glow.addColorStop(0,"rgba(200,50,0,0.4)"); glow.addColorStop(1,"transparent");
+      ctx.fillStyle=glow; ctx.fillRect(0,0,w,h);
+      // dragon silhouette
+      ctx.fillStyle="#0d0000";
+      ctx.beginPath(); ctx.ellipse(w/2,h*0.38,60,35,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(w/2+50,h*0.28,25,20,0.3,0,Math.PI*2); ctx.fill();
+      // glowing eyes
+      ctx.fillStyle="#ff2200"; ctx.beginPath(); ctx.arc(w/2+42,h*0.25,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#ff2200"; ctx.beginPath(); ctx.arc(w/2+58,h*0.25,4,0,Math.PI*2); ctx.fill();
+    },
+  };
+  if(arts[type]) arts[type]();
+}
+
+function roundRectC(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+
+// ══════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════
+function updateHUD() {
+  const p = G.player;
+  document.getElementById("char-name-display").textContent = p.name;
+  document.getElementById("hp-text").textContent = `${p.hp}/${p.hpMax}`;
+  document.getElementById("mp-text").textContent = `${p.mp}/${p.mpMax}`;
+  document.getElementById("xp-text").textContent = `${p.xp}/${p.xpNext}`;
+  document.getElementById("hp-bar").style.width = (p.hp/p.hpMax*100)+"%";
+  document.getElementById("mp-bar").style.width = (p.mp/p.mpMax*100)+"%";
+  document.getElementById("xp-bar").style.width = (p.xp/p.xpNext*100)+"%";
+  document.getElementById("stat-atk").textContent = p.atk;
+  document.getElementById("stat-def").textContent = p.def;
+  document.getElementById("stat-spd").textContent = p.spd;
+  document.getElementById("stat-lvl").textContent = p.level;
+  document.getElementById("gold-display").textContent = p.gold;
+  document.getElementById("eq-weapon").textContent = p.weapon;
+  document.getElementById("eq-armor").textContent = p.armor;
+  document.getElementById("eq-ring").textContent = p.ring || "—";
+  renderInventory();
+  renderMap();
+  renderQuests();
+}
+
+function renderInventory() {
+  const el = document.getElementById("inventory-list");
+  el.innerHTML = "";
+  G.player.inventory.forEach((item,i)=>{
+    const d = document.createElement("div");
+    d.className = "inventory-item";
+    d.innerHTML = `<span>${item.name}</span><span class="item-qty">x${item.qty}</span>`;
+    if(item.type==="consumable") d.onclick = ()=>useItem(i);
+    el.appendChild(d);
+  });
+  if(!G.player.inventory.length) el.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:4px 0;">Empty</div>';
+}
+
+function renderMap() {
+  const el = document.getElementById("mini-map");
+  el.innerHTML = "";
+  for(let r=0;r<5;r++) for(let c=0;c<5;c++) {
+    const cell = document.createElement("div");
+    cell.className = "map-cell";
+    const loc = LOCATIONS.find(l=>l.mapPos[0]===c&&l.mapPos[1]===r);
+    if(loc) {
+      if(loc.id===G.location) cell.classList.add("current");
+      else if(G.visitedLocations.has(loc.id)) {
+        cell.classList.add("visited");
+        if(loc.type==="town") cell.classList.add("town");
+        else if(loc.type==="enemy") cell.classList.add("enemy");
+        else if(loc.type==="boss") cell.classList.add("boss");
+      }
+    }
+    el.appendChild(cell);
+  }
+}
+
+function renderQuests() {
+  const el = document.getElementById("quest-list");
+  el.innerHTML = "";
+  G.quests.forEach(q=>{
+    const d = document.createElement("div");
+    d.className = "quest-item";
+    d.innerHTML = `<div class="quest-name">${q.done?"✓ ":""} ${q.name}</div><div class="quest-desc">${q.desc}${q.done?" — Complete!":""}</div>`;
+    el.appendChild(d);
+  });
+  // sunstone progress
+  const d = document.createElement("div");
+  d.className = "quest-item";
+  d.innerHTML = `<div class="quest-name">🌟 Sunstone Fragments</div><div class="quest-desc">${G.player.sunstones}/3 collected</div>`;
+  el.appendChild(d);
+}
+
+function addLog(msg, type="system") {
+  const log = document.getElementById("log");
+  const entry = document.createElement("div");
+  entry.className = "log-entry " + type;
+  entry.textContent = msg;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setActions(actions) {
+  const el = document.getElementById("action-buttons");
+  el.innerHTML = "";
+  actions.forEach(a=>{
+    const btn = document.createElement("button");
+    btn.className = "action-btn" + (a.cls?" "+a.cls:"");
+    btn.textContent = a.label;
+    btn.disabled = !!a.disabled;
+    btn.onclick = a.fn;
+    el.appendChild(btn);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════
+function goTo(id) {
+  G.location = id;
+  G.visitedLocations.add(id);
+  const loc = LOCATIONS[id];
+  document.getElementById("location-name").textContent = loc.name;
+  document.getElementById("scene-desc").textContent = loc.desc;
+  drawScene(loc.art);
+  buildLocationActions(loc);
+  updateHUD();
+  addLog(`You arrive at ${loc.name}.`, "story");
+}
+
+function buildLocationActions(loc) {
+  const actions = loc.actions.map(a=>{
+    if(a.go !== undefined) return {label:a.label, fn:()=>goTo(a.go)};
+    if(a.fn==="startBattle") return {label:a.label, cls:"danger", fn:()=>startBattle(a.data), disabled: G.defeatedEnemies.has(a.data)};
+    if(a.fn==="openShop") return {label:a.label, fn:()=>openShop(a.data)};
+    if(a.fn==="visitHealer") return {label:a.label, fn:visitHealer};
+    if(a.fn==="searchHerbs") return {label:a.label, fn:searchHerbs};
+    if(a.fn==="talkElder") return {label:a.label, fn:talkElder};
+    if(a.fn==="climbSummit") return {label:a.label, fn:climbSummit, disabled: !G.defeatedEnemies.has("iceWraith")};
+    if(a.fn==="searchVaults") return {label:a.label, fn:searchVaults, disabled: !!G.flags.vaultsSearched};
+    if(a.fn==="goSanctum") return {label:a.label, fn:()=>goSanctum(), disabled: G.player.sunstones < 3};
+    return {label:a.label, fn:()=>{}};
+  });
+  setActions(actions);
+}
+
+function goSanctum() {
+  if(G.player.sunstones < 3) { addLog("You need all 3 Sunstone Fragments to enter the Dragon's Sanctum.", "danger"); return; }
+  addLog("The door blazes with golden light as the Sunstones resonate. The sanctum opens before you!", "story");
+  goTo(6);
+}
+
+// ══════════════════════════════════════════════════════
+//  SPECIAL ACTIONS
+// ══════════════════════════════════════════════════════
+function visitHealer() {
+  if(G.player.gold < 20) { addLog("The healer asks for 20 gold, but you don't have enough.", "danger"); return; }
+  G.player.gold -= 20;
+  G.player.hp = G.player.hpMax;
+  G.player.mp = G.player.mpMax;
+  addLog("The healer tends to your wounds. HP and MP fully restored for 20 gold.", "loot");
+  updateHUD();
+}
+
+function searchHerbs() {
+  if(G.flags.herbsSearched) { addLog("You've already picked the herbs here.", "system"); return; }
+  G.flags.herbsSearched = true;
+  G.player.inventory.push({name:"Health Potion",qty:1,type:"consumable",effect:"hp",val:40});
+  addLog("You find 2 medicinal herbs and fashion a Health Potion!", "loot");
+  updateHUD();
+}
+
+function talkElder() {
+  openDialog("Elder Varos",
+    "Young wanderer… our village has long suffered under Malachar's darkness. The Sunstone was shattered into three fragments — one in the forest, one on the frozen summit, and one hidden deep in the ruined keep. Bring them together and you may yet restore hope to this realm.",
+    [{label:"I will find them all", fn:()=>closeDialog()}]);
+}
+
+function climbSummit() {
+  if(G.defeatedEnemies.has("iceWraith")) {
+    if(!G.flags.summitClaimed) {
+      G.flags.summitClaimed = true;
+      G.player.sunstones++;
+      G.player.gold += 15;
+      addLog("★ You reach the summit shrine and claim the second Sunstone Fragment!", "loot");
+      addLog(`Sunstones: ${G.player.sunstones}/3`, "loot");
+      updateHUD();
+    } else { addLog("The shrine is empty — you already claimed the fragment.", "system"); }
+  } else { addLog("The path is still blocked by the Ice Wraith.", "danger"); }
+}
+
+function searchVaults() {
+  G.flags.vaultsSearched = true;
+  if(!G.defeatedEnemies.has("skeletonKnight")) { addLog("You dare not linger with the Skeleton Knight roaming near.", "danger"); return; }
+  G.player.sunstones++;
+  G.player.gold += 40;
+  addLog("★ Deep in the vault, you unearth the third Sunstone Fragment!", "loot");
+  addLog(`Sunstones: ${G.player.sunstones}/3`, "loot");
+  addLog("You also find 40 gold in a crumbling chest.", "loot");
+  updateHUD();
+  goTo(5);
+}
+
+function useItem(index) {
+  const item = G.player.inventory[index];
+  if(!item || item.type !== "consumable") return;
+  if(item.effect === "hp") {
+    const heal = Math.min(item.val, G.player.hpMax - G.player.hp);
+    G.player.hp += heal;
+    addLog(`You use ${item.name} and restore ${heal} HP.`, "loot");
+  } else if(item.effect === "mp") {
+    const restore = Math.min(item.val, G.player.mpMax - G.player.mp);
+    G.player.mp += restore;
+    addLog(`You use ${item.name} and restore ${restore} MP.`, "loot");
+  }
+  item.qty--;
+  if(item.qty <= 0) G.player.inventory.splice(index, 1);
+  updateHUD();
+}
+
+// ══════════════════════════════════════════════════════
+//  SHOP
+// ══════════════════════════════════════════════════════
+function openShop(shopId) {
+  const shop = SHOPS[shopId];
+  document.getElementById("shop-name").textContent = shop.name;
+  const el = document.getElementById("shop-items");
+  el.innerHTML = `<p style="color:var(--text2);font-size:14px;margin-bottom:12px;">Your gold: <span style="color:var(--gold)" id="shop-gold">${G.player.gold}</span></p>`;
+  shop.items.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "shop-item";
+    div.innerHTML = `
+      <div class="shop-item-info">
+        <div class="name">${item.name}</div>
+        <div class="desc">${item.desc}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="gold-price">🪙 ${item.price}</span>
+        <button class="btn" style="padding:6px 12px;font-size:11px;" onclick="buyItem('${shopId}','${item.name}')">Buy</button>
+      </div>`;
+    el.appendChild(div);
+  });
+  document.getElementById("shop-modal").classList.add("open");
+}
+
+function buyItem(shopId, itemName) {
+  const shop = SHOPS[shopId];
+  const item = shop.items.find(i=>i.name===itemName);
+  if(!item) return;
+  if(G.player.gold < item.price) { addLog("Not enough gold!", "danger"); return; }
+  G.player.gold -= item.price;
+  if(item.type==="consumable") {
+    const existing = G.player.inventory.find(i=>i.name===item.name);
+    if(existing) existing.qty++;
+    else G.player.inventory.push({...item, qty:1});
+    addLog(`Bought ${item.name}.`, "loot");
+  } else if(item.type==="equip") {
+    equipItem(item);
+  }
+  document.getElementById("shop-gold").textContent = G.player.gold;
+  document.getElementById("gold-display").textContent = G.player.gold;
+  updateHUD();
+}
+
+function equipItem(item) {
+  if(item.slot==="weapon") {
+    G.player.atk = G.player.atk - G.player.weaponAtk + item.val;
+    G.player.weaponAtk = item.val;
+    G.player.weapon = item.name;
+  } else if(item.slot==="armor") {
+    G.player.def = G.player.def - G.player.armorDef + item.val;
+    G.player.armorDef = item.val;
+    G.player.armor = item.name;
+  } else if(item.slot==="ring") {
+    if(G.player.ring) addLog(`Unequipped ${G.player.ring}.`,"system");
+    G.player[item.statName] += item.val;
+    G.player.ring = item.name;
+  }
+  addLog(`Equipped ${item.name}! ${item.statName ? item.statName.toUpperCase()+' +'+item.val : ''}`, "loot");
+}
+
+function closeShop() { document.getElementById("shop-modal").classList.remove("open"); }
+
+// ══════════════════════════════════════════════════════
+//  DIALOG
+// ══════════════════════════════════════════════════════
+function openDialog(title, text, choices) {
+  document.getElementById("dialog-title").textContent = title;
+  document.getElementById("dialog-text").textContent = text;
+  const el = document.getElementById("dialog-choices");
+  el.innerHTML = "";
+  choices.forEach(c=>{
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = c.label;
+    btn.onclick = c.fn;
+    el.appendChild(btn);
+  });
+  document.getElementById("dialog-modal").classList.add("open");
+}
+function closeDialog() { document.getElementById("dialog-modal").classList.remove("open"); }
+
+// ══════════════════════════════════════════════════════
+//  BATTLE SYSTEM
+// ══════════════════════════════════════════════════════
+function startBattle(enemyId) {
+  if(G.defeatedEnemies.has(enemyId)) { addLog("That enemy is already defeated.", "system"); return; }
+  const enemyTemplate = ENEMIES[enemyId];
+  G.battle = {
+    id: enemyId,
+    ...JSON.parse(JSON.stringify(enemyTemplate)),
+    hp: enemyTemplate.hp, hpMax: enemyTemplate.hpMax,
+  };
+  G.battleActive = true;
+  G.battleTurn = "player";
+
+  showScreen("battle-screen");
+  document.getElementById("b-player-name").textContent = G.player.name;
+  document.getElementById("b-enemy-name").textContent = G.battle.name;
+  document.getElementById("b-enemy-sprite").textContent = G.battle.sprite;
+  document.getElementById("b-player-sprite").textContent = "🧙";
+  document.getElementById("battle-log").innerHTML = "";
+
+  updateBattleHUD();
+  setBattleActions();
+  battleLog(`⚔ A battle begins! ${G.player.name} vs ${G.battle.name}!`, "story");
+  if(G.battle.isBoss) battleLog("BOSS BATTLE — The Dragon-King Malachar awakens!", "danger");
+}
+
+function updateBattleHUD() {
+  const p = G.player, e = G.battle;
+  document.getElementById("b-player-hp").textContent = `${p.hp}/${p.hpMax}`;
+  document.getElementById("b-player-mp").textContent = `${p.mp}/${p.mpMax}`;
+  document.getElementById("b-player-hp-bar").style.width = (p.hp/p.hpMax*100)+"%";
+  document.getElementById("b-player-mp-bar").style.width = (p.mp/p.mpMax*100)+"%";
+  document.getElementById("b-enemy-hp").textContent = `${Math.max(0,e.hp)}/${e.hpMax}`;
+  document.getElementById("b-enemy-hp-bar").style.width = (Math.max(0,e.hp)/e.hpMax*100)+"%";
+}
+
+function battleLog(msg, type="combat") {
+  const el = document.getElementById("battle-log");
+  const d = document.createElement("div");
+  d.className = "log-entry " + type;
+  d.textContent = msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setBattleActions(mode="main") {
+  const el = document.getElementById("battle-actions");
+  el.innerHTML = "";
+  if(mode === "main") {
+    [
+      {label:"⚔ Attack", fn:()=>playerAttack()},
+      {label:"✦ Magic", fn:()=>setBattleActions("magic"), cls:"magic"},
+      {label:"🧪 Items", fn:()=>setBattleActions("items")},
+      {label:"🏃 Flee", fn:()=>fleeBattle(), cls:"danger"},
+    ].forEach(a=>addBattleBtn(a, el));
+  } else if(mode === "magic") {
+    G.player.spells.forEach(spell=>{
+      addBattleBtn({label:`${spell.name} (${spell.cost}MP)`, fn:()=>castSpell(spell), cls:"magic", disabled:G.player.mp<spell.cost}, el);
+    });
+    addBattleBtn({label:"← Back", fn:()=>setBattleActions("main")}, el);
+  } else if(mode === "items") {
+    const cons = G.player.inventory.filter(i=>i.type==="consumable");
+    if(!cons.length) { battleLog("No usable items.", "system"); setBattleActions("main"); return; }
+    cons.forEach((item,i)=>{
+      addBattleBtn({label:`${item.name} x${item.qty}`, fn:()=>useItemBattle(i)}, el);
+    });
+    addBattleBtn({label:"← Back", fn:()=>setBattleActions("main")}, el);
+  }
+}
+
+function addBattleBtn(a, el) {
+  const btn = document.createElement("button");
+  btn.className = "action-btn" + (a.cls?" "+a.cls:"");
+  btn.textContent = a.label;
+  btn.disabled = !!a.disabled;
+  btn.onclick = a.fn;
+  el.appendChild(btn);
+}
+
+function disableBattleActions() { document.querySelectorAll(".battle-actions .action-btn").forEach(b=>b.disabled=true); }
+
+function playerAttack() {
+  const dmg = Math.max(1, G.player.atk + Math.floor(Math.random()*6) - G.battle.def);
+  G.battle.hp -= dmg;
+  shake("b-enemy-sprite");
+  battleLog(`You strike ${G.battle.name} for ${dmg} damage!`, "combat");
+  updateBattleHUD();
+  checkBattleEnd();
+}
+
+function castSpell(spell) {
+  if(G.player.mp < spell.cost) { battleLog("Not enough MP!", "danger"); return; }
+  G.player.mp -= spell.cost;
+  if(spell.heal) {
+    const healed = Math.min(spell.heal, G.player.hpMax - G.player.hp);
+    G.player.hp += healed;
+    battleLog(`✦ You cast ${spell.name} and restore ${healed} HP!`, "magic");
+  } else {
+    const dmg = spell.dmg + Math.floor(Math.random()*8);
+    G.battle.hp -= dmg;
+    shake("b-enemy-sprite");
+    battleLog(`✦ You cast ${spell.name} for ${dmg} damage!`, "magic");
+  }
+  updateBattleHUD();
+  checkBattleEnd();
+}
+
+function useItemBattle(inventoryIndex) {
+  const item = G.player.inventory.filter(i=>i.type==="consumable")[inventoryIndex];
+  if(!item) return;
+  const realIndex = G.player.inventory.indexOf(item);
+  if(item.effect==="hp") {
+    const h=Math.min(item.val,G.player.hpMax-G.player.hp); G.player.hp+=h;
+    battleLog(`You use ${item.name} — +${h} HP!`,"loot");
+  } else if(item.effect==="mp") {
+    const m=Math.min(item.val,G.player.mpMax-G.player.mp); G.player.mp+=m;
+    battleLog(`You use ${item.name} — +${m} MP!`,"loot");
+  }
+  item.qty--;
+  if(item.qty<=0) G.player.inventory.splice(realIndex,1);
+  updateBattleHUD();
+  enemyTurn();
+}
+
+function enemyTurn() {
+  if(!G.battleActive) return;
+  disableBattleActions();
+  setTimeout(()=>{
+    const e = G.battle;
+    const move = e.moves[Math.floor(Math.random()*e.moves.length)];
+    let dmg = Math.max(1, e.atk + Math.floor(Math.random()*6) - G.player.def);
+    // boss has special moves
+    if(e.isBoss && move==="Dark Nova") { dmg = Math.floor(dmg*1.5); battleLog(`🐉 ${e.name} unleashes DARK NOVA for ${dmg} damage!`,"danger"); }
+    else if(move==="Regenerate") { e.hp=Math.min(e.hpMax,e.hp+15); dmg=0; battleLog(`${e.name} regenerates 15 HP!`,"danger"); updateBattleHUD(); }
+    else if(move==="Terrorize") { dmg=Math.floor(dmg*0.5); battleLog(`${e.name} terrifies you! You lose your nerve. ${dmg} damage.`,"danger"); }
+    else battleLog(`${e.name} uses ${move} for ${dmg} damage!`,"danger");
+    if(dmg>0){G.player.hp=Math.max(0,G.player.hp-dmg); shake("b-player-sprite");}
+    updateBattleHUD();
+    if(G.player.hp<=0){endBattle(false);return;}
+    setBattleActions("main");
+  }, 800);
+}
+
+function checkBattleEnd() {
+  if(G.battle.hp <= 0) { endBattle(true); return; }
+  disableBattleActions();
+  setTimeout(()=>{ enemyTurn(); }, 400);
+}
+
+function endBattle(won) {
+  G.battleActive = false;
+  disableBattleActions();
+  if(won) {
+    const e = G.battle;
+    G.defeatedEnemies.add(e.id);
+    G.player.xp += e.xp;
+    G.player.gold += e.gold;
+    battleLog(`★ Victory! You defeated ${e.name}!`, "loot");
+    battleLog(`Gained ${e.xp} XP and ${e.gold} gold.`, "loot");
+    // loot
+    if(e.loot) e.loot.forEach(item=>{
+      if(item.equip) { equipItem(item); battleLog(`Found ${item.name}!`,"loot"); }
+      else {
+        const ex = G.player.inventory.find(i=>i.name===item.name);
+        if(ex) ex.qty+=item.qty; else G.player.inventory.push({...item});
+        battleLog(`Found ${item.name}!`,"loot");
+      }
+    });
+    // sunstone
+    if(e.sunstone) {
+      G.player.sunstones++;
+      battleLog(`★ You claim a Sunstone Fragment! (${G.player.sunstones}/3)`, "loot");
+    }
+    // boss win
+    if(e.isBoss) {
+      G.quests[1].done = true;
+      battleLog("★ ★ ★  YOU HAVE SLAIN THE DRAGON-KING MALACHAR!  ★ ★ ★", "loot");
+      battleLog("The Sunstone's light floods the realm. Darkness retreats. The realm is saved!", "story");
+    }
+    checkLevelUp();
+    setTimeout(()=>{ showScreen("game-screen"); goTo(G.location); updateHUD(); addLog(`Returned from battle — defeated ${e.name}.`, "story"); }, 1500);
+  } else {
+    G.player.hp = Math.max(1, Math.floor(G.player.hpMax * 0.3));
+    battleLog("You fall... but wake at the crossroads. Your spirit endures.", "danger");
+    setTimeout(()=>{ showScreen("game-screen"); goTo(0); updateHUD(); addLog("Defeated — you recover at the Crossroads with low health.", "danger"); }, 1500);
+  }
+}
+
+function fleeBattle() {
+  const chance = Math.random();
+  if(chance > 0.35) {
+    battleLog("You escape from battle!", "system");
+    G.battleActive = false;
+    setTimeout(()=>{ showScreen("game-screen"); goTo(G.location); }, 800);
+  } else {
+    battleLog("You couldn't escape!", "danger");
+    enemyTurn();
+  }
+}
+
+function checkLevelUp() {
+  while(G.player.xp >= G.player.xpNext) {
+    G.player.xp -= G.player.xpNext;
+    G.player.level++;
+    G.player.xpNext = Math.floor(G.player.xpNext * 1.5);
+    G.player.hpMax += 20; G.player.hp = G.player.hpMax;
+    G.player.mpMax += 10; G.player.mp = G.player.mpMax;
+    G.player.atk += 3; G.player.def += 2;
+    battleLog(`★ LEVEL UP! Now level ${G.player.level}. All stats increased!`, "loot");
+    addLog(`Leveled up to ${G.player.level}!`, "loot");
+  }
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.classList.remove("shake");
+  void el.offsetWidth;
+  el.classList.add("shake");
+}
+
+// ══════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+function startGame() {
+  showScreen("game-screen");
+  updateHUD();
+  goTo(0);
+  // spawn embers
+  setInterval(()=>{ const em=document.createElement("div"); em.className="title-ember"; em.style.cssText=`left:${Math.random()*100}%;animation-duration:${3+Math.random()*4}s;animation-delay:${Math.random()*2}s;`; document.getElementById("title-screen").appendChild(em); setTimeout(()=>em.remove(),8000); }, 200);
+}
+
+// ember effect on title
+for(let i=0;i<20;i++){
+  const em=document.createElement("div"); em.className="title-ember";
+  em.style.cssText=`left:${Math.random()*100}%;animation-duration:${3+Math.random()*4}s;animation-delay:${Math.random()*3}s;`;
+  document.getElementById("title-screen").appendChild(em);
+}
+
+window.addEventListener("resize", ()=>{ if(G.location!==undefined) drawScene(LOCATIONS[G.location]?.art); });
+</script>
+
+<button class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+  <span class="icon" id="theme-icon">☀️</span>
+</button>
+<script>
+(function() {
+  const toggle = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  
+  function updateTheme(isLight) {
+    if (isLight) {
+      document.body.classList.add('light-mode');
+      icon.textContent = '🌙';
+    } else {
+      document.body.classList.remove('light-mode');
+      icon.textContent = '☀️';
+    }
+  }
+
+  // Load initial theme
+  const saved = localStorage.getItem('levelup-theme');
+  updateTheme(saved === 'light');
+
+  toggle.addEventListener('click', () => {
+    const isLight = !document.body.classList.contains('light-mode');
+    updateTheme(isLight);
+    localStorage.setItem('levelup-theme', isLight ? 'light' : 'dark');
+  });
+})();
+</script>
+</body>
+</html>
